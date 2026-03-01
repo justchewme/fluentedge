@@ -120,17 +120,17 @@ export default function Admin() {
 
   // ─── Styles ──────────────────────────────────────────────────────────────
   const s = {
-    bg: { minHeight: '100vh', background: '#0A0F1E', fontFamily: "'Plus Jakarta Sans', sans-serif", color: '#fff', padding: '0' },
-    header: { background: 'rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100, backdropFilter: 'blur(20px)' },
-    logo: { fontSize: '18px', fontWeight: '800', background: 'linear-gradient(135deg, #00BFFF, #9B59B6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' },
-    adminBadge: { background: 'rgba(0,191,255,0.12)', border: '1px solid rgba(0,191,255,0.25)', borderRadius: '99px', padding: '4px 10px', fontSize: '12px', color: '#00BFFF', fontWeight: '700' },
+    bg: { minHeight: '100vh', background: '#EEF2F7', fontFamily: "'Inter', -apple-system, sans-serif", color: '#0F172A', padding: '0' },
+    header: { background: '#fff', borderBottom: '1px solid #DDE4EE', padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 },
+    logo: { fontSize: '17px', fontWeight: '800', color: '#0D47A1' },
+    adminBadge: { background: '#EBF3FF', border: '1px solid #BFDBFE', borderRadius: '99px', padding: '4px 10px', fontSize: '12px', color: '#0D47A1', fontWeight: '700' },
     main: { padding: '24px', maxWidth: '1200px', margin: '0 auto' },
-    input: { background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '10px', color: '#fff', padding: '10px 14px', fontSize: '14px', fontFamily: 'inherit', outline: 'none', width: '100%' },
-    select: { background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '10px', color: '#fff', padding: '10px 14px', fontSize: '14px', fontFamily: 'inherit', outline: 'none', cursor: 'pointer' },
+    input: { background: '#fff', border: '1.5px solid #DDE4EE', borderRadius: '10px', color: '#0F172A', padding: '10px 14px', fontSize: '14px', fontFamily: 'inherit', outline: 'none', width: '100%' },
+    select: { background: '#fff', border: '1.5px solid #DDE4EE', borderRadius: '10px', color: '#0F172A', padding: '10px 14px', fontSize: '14px', fontFamily: 'inherit', outline: 'none', cursor: 'pointer' },
     btn: { padding: '10px 18px', borderRadius: '10px', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: '14px', fontWeight: '600' },
     table: { width: '100%', borderCollapse: 'collapse' },
-    th: { padding: '12px 14px', textAlign: 'left', fontSize: '12px', fontWeight: '700', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.8px', textTransform: 'uppercase', borderBottom: '1px solid rgba(255,255,255,0.07)', cursor: 'pointer', whiteSpace: 'nowrap', userSelect: 'none' },
-    td: { padding: '12px 14px', fontSize: '14px', borderBottom: '1px solid rgba(255,255,255,0.05)', verticalAlign: 'middle' },
+    th: { padding: '12px 14px', textAlign: 'left', fontSize: '11px', fontWeight: '700', color: '#94A3B8', letterSpacing: '0.8px', textTransform: 'uppercase', borderBottom: '1px solid #EEF2F7', cursor: 'pointer', whiteSpace: 'nowrap', userSelect: 'none', background: '#F8FAFC' },
+    td: { padding: '12px 14px', fontSize: '14px', borderBottom: '1px solid #F1F5F9', verticalAlign: 'middle', color: '#0F172A' },
   }
 
   // ─── Login Screen ─────────────────────────────────────────────────────────
@@ -143,23 +143,15 @@ export default function Admin() {
           <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet" />
         </Head>
         <div style={{ ...s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-          {/* Orbs */}
-          {[
-            { top: '-80px', left: '-80px', size: '300px', color: 'rgba(0,191,255,0.2)' },
-            { bottom: '-60px', right: '-60px', size: '250px', color: 'rgba(155,89,182,0.15)' },
-          ].map((orb, i) => (
-            <div key={i} style={{ position: 'fixed', width: orb.size, height: orb.size, borderRadius: '50%', background: `radial-gradient(circle, ${orb.color} 0%, transparent 70%)`, filter: 'blur(60px)', top: orb.top, left: orb.left, bottom: orb.bottom, right: orb.right, zIndex: 0 }} />
-          ))}
-
-          <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '360px' }}>
+          <div style={{ width: '100%', maxWidth: '380px' }}>
             <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-              <div style={{ fontSize: '36px', marginBottom: '12px' }}>🔐</div>
-              <div style={{ ...s.logo, fontSize: '26px' }}>FluentEdge</div>
-              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '14px', marginTop: '4px' }}>Admin Dashboard</div>
+              <div style={{ width: 56, height: 56, borderRadius: 14, background: '#0D47A1', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 26 }}>📘</div>
+              <div style={{ ...s.logo, fontSize: '24px' }}>FluentEdge</div>
+              <div style={{ color: '#94A3B8', fontSize: '14px', marginTop: '4px' }}>Admin Dashboard</div>
             </div>
 
-            <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '18px', padding: '28px' }}>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: 'rgba(255,255,255,0.5)', marginBottom: '8px' }}>
+            <div style={{ background: '#fff', border: '1px solid #DDE4EE', borderRadius: '16px', padding: '28px', boxShadow: '0 4px 16px rgba(13,71,161,0.08)' }}>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#5B6B82', marginBottom: '8px' }}>
                 Admin Password
               </label>
               <input
@@ -172,11 +164,11 @@ export default function Admin() {
                 autoFocus
               />
               {pwError && (
-                <div style={{ color: '#FF4757', fontSize: '13px', marginTop: '8px' }}>{pwError}</div>
+                <div style={{ color: '#DC2626', fontSize: '13px', marginTop: '8px' }}>{pwError}</div>
               )}
               <button
                 onClick={handleLogin}
-                style={{ ...s.btn, marginTop: '16px', width: '100%', background: 'linear-gradient(135deg, #00BFFF, #0080FF)', color: '#fff', padding: '14px', fontSize: '15px', boxShadow: '0 0 20px rgba(0,191,255,0.3)' }}
+                style={{ ...s.btn, marginTop: '16px', width: '100%', background: '#0D47A1', color: '#fff', padding: '14px', fontSize: '15px', boxShadow: '0 2px 8px rgba(13,71,161,0.25)', borderRadius: '12px' }}
               >
                 Login →
               </button>
@@ -206,15 +198,15 @@ export default function Admin() {
           {/* Stats row */}
           <div style={{ display: 'flex', gap: '16px', marginBottom: '28px', flexWrap: 'wrap' }}>
             {[
-              { label: 'Total Users', value: users.length, icon: '👥' },
-              { label: 'Batam Region', value: users.filter(u => ['Batam','Tanjung Pinang','Bintan','Karimun'].includes(u.city)).length, icon: '📍' },
-              { label: 'Faith Community', value: users.filter(u => u.religion === 'faith').length, icon: '⛪' },
-              { label: 'With Referrals', value: users.filter(u => u.referralFrom).length, icon: '🔗' },
+              { label: 'Total Users', value: users.length, icon: '👥', color: '#0D47A1', bg: '#EBF3FF' },
+              { label: 'Batam Region', value: users.filter(u => ['Batam','Tanjung Pinang','Bintan','Karimun'].includes(u.city)).length, icon: '📍', color: '#059669', bg: '#D1FAE5' },
+              { label: 'Faith Community', value: users.filter(u => u.religion === 'faith').length, icon: '⛪', color: '#7C3AED', bg: '#EDE9FE' },
+              { label: 'With Referrals', value: users.filter(u => u.referralFrom).length, icon: '🔗', color: '#B45309', bg: '#FEF3C7' },
             ].map((stat) => (
-              <div key={stat.label} style={{ flex: '1', minWidth: '140px', padding: '16px 20px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px' }}>
-                <div style={{ fontSize: '24px', marginBottom: '6px' }}>{stat.icon}</div>
-                <div style={{ fontSize: '28px', fontWeight: '800', lineHeight: 1 }}>{stat.value}</div>
-                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginTop: '4px' }}>{stat.label}</div>
+              <div key={stat.label} style={{ flex: '1', minWidth: '140px', padding: '16px 20px', background: stat.bg, border: '1px solid transparent', borderRadius: '14px' }}>
+                <div style={{ fontSize: '22px', marginBottom: '8px' }}>{stat.icon}</div>
+                <div style={{ fontSize: '28px', fontWeight: '800', lineHeight: 1, color: stat.color }}>{stat.value}</div>
+                <div style={{ fontSize: '12px', color: '#5B6B82', marginTop: '4px', fontWeight: '600' }}>{stat.label}</div>
               </div>
             ))}
           </div>
@@ -244,12 +236,12 @@ export default function Admin() {
             </select>
 
             {/* Refresh */}
-            <button onClick={fetchUsers} style={{ ...s.btn, background: 'rgba(0,191,255,0.12)', color: '#00BFFF', border: '1px solid rgba(0,191,255,0.25)' }}>
+            <button onClick={fetchUsers} style={{ ...s.btn, background: '#EBF3FF', color: '#0D47A1', border: '1px solid #BFDBFE' }}>
               {loading ? '⟳ Loading...' : '⟳ Refresh'}
             </button>
 
             {/* Export CSV */}
-            <button onClick={exportCSV} style={{ ...s.btn, background: 'rgba(37,211,102,0.12)', color: '#25D366', border: '1px solid rgba(37,211,102,0.25)' }}>
+            <button onClick={exportCSV} style={{ ...s.btn, background: '#D1FAE5', color: '#065F46', border: '1px solid #6EE7B7' }}>
               ↓ Export CSV
             </button>
           </div>
@@ -267,7 +259,7 @@ export default function Admin() {
           )}
 
           {/* Table */}
-          <div style={{ overflowX: 'auto', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '16px' }}>
+          <div style={{ overflowX: 'auto', background: '#fff', border: '1px solid #DDE4EE', borderRadius: '16px', boxShadow: '0 1px 4px rgba(13,71,161,0.06)' }}>
             {loading ? (
               <div style={{ padding: '60px', textAlign: 'center', color: 'rgba(255,255,255,0.3)' }}>
                 Loading users...
@@ -371,7 +363,7 @@ export default function Admin() {
           </div>
 
           {/* Footer */}
-          <div style={{ marginTop: '24px', textAlign: 'center', color: 'rgba(255,255,255,0.2)', fontSize: '12px' }}>
+          <div style={{ marginTop: '24px', textAlign: 'center', color: '#CBD5E1', fontSize: '12px' }}>
             FluentEdge Admin Panel · {new Date().getFullYear()}
           </div>
         </div>
