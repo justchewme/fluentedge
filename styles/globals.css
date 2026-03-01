@@ -1,19 +1,19 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,800;9..144,900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html { -webkit-text-size-adjust: 100%; }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #F5F3EF;
-  color: #0F172A;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #0A0A0F;
+  color: #F1F0EE;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
 }
 
-h1, h2 { font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; }
+h1, h2 { font-family: 'Fraunces', Georgia, serif; }
 
 button { font-family: inherit; cursor: pointer; }
 input, select, textarea { font-family: inherit; }
@@ -38,5 +38,5 @@ a { text-decoration: none; }
   to { transform: rotate(360deg); }
 }
 
-.fade-in { animation: fadeIn 0.3s ease forwards; }
+.fade-in  { animation: fadeIn  0.3s ease forwards; }
 .slide-up { animation: slideUp 0.4s ease forwards; }

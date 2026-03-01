@@ -1,1099 +1,1067 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import Head from 'next/head'
+import { VOCAB_BANK, GRAMMAR_BANK, READING_BANK, SPEAKING_BANK, CURRICULUM_WEEKS } from '../content'
 
-// ─── Design Tokens ────────────────────────────────────────────────────────────
+/* ═══════════════════════════════════════════════════════════════════════════════
+   DESIGN TOKENS
+═══════════════════════════════════════════════════════════════════════════════ */
 const C = {
-  bg:           '#F5F3EF',
-  surface:      '#FFFFFF',
-  border:       '#DDE4EE',
-  borderLight:  '#F5F3EF',
-  primary:      '#0A2540',
-  primaryDark:  '#071A2E',
-  primaryLight: '#E6EBF4',
-  primaryMid:   '#0D3060',
-  cta:          '#00A896',
-  ctaDark:      '#007A6E',
-  ctaLight:     '#E6F7F5',
-  text:         '#0F172A',
-  textMuted:    '#5B6B82',
-  textLight:    '#94A3B8',
-  success:      '#065F46',
-  successBg:    '#D1FAE5',
-  error:        '#991B1B',
-  errorBg:      '#FEE2E2',
-  gold:         '#B45309',
-  goldBg:       '#FEF3C7',
-  wa:           '#128C7E',
-  waBg:         '#D1FAE5',
-  shadow:       '0 1px 4px rgba(10,37,64,0.06), 0 4px 16px rgba(10,37,64,0.06)',
-  shadowSm:     '0 1px 3px rgba(0,0,0,0.07)',
-  shadowLg:     '0 4px 6px rgba(0,0,0,0.04), 0 12px 40px rgba(10,37,64,0.1)',
-  radius:       '12px',
-  radiusSm:     '8px',
-  radiusLg:     '16px',
+  bg:           '#0A0A0F',
+  card:         '#131318',
+  elevated:     '#1C1C24',
+  border:       '#2A2A38',
+  accent:       '#6366F1',
+  accentHov:    '#818CF8',
+  accentGlow:   'rgba(99,102,241,0.15)',
+  accentBorder: 'rgba(99,102,241,0.35)',
+  gold:         '#F59E0B',
+  goldGlow:     'rgba(245,158,11,0.15)',
+  success:      '#10B981',
+  successBg:    'rgba(16,185,129,0.08)',
+  error:        '#F43F5E',
+  errorBg:      'rgba(244,63,94,0.08)',
+  text:         '#F1F0EE',
+  textSec:      '#94A3B8',
+  textMuted:    '#64748B',
+}
+const FR = "'Fraunces', Georgia, serif"
+const PJ = "'Plus Jakarta Sans', -apple-system, sans-serif"
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   CONTENT HELPERS
+═══════════════════════════════════════════════════════════════════════════════ */
+function getVocabList(level) {
+  if (level === 'advanced') return VOCAB_BANK.high || VOCAB_BANK.lower
+  if (level === 'intermediate') return VOCAB_BANK.medium || VOCAB_BANK.lower
+  return VOCAB_BANK.lower
 }
 
-// ─── Data ─────────────────────────────────────────────────────────────────────
+function getLessonContent(day, level) {
+  const week = Math.min(Math.ceil(day / 7), 26)
+  const vList = getVocabList(level)
 
-const GOALS = [
-  { id: 'career',   icon: '💼', ID: 'Karir & Pekerjaan',       EN: 'Career & Work',         subID: 'Promosi dan peluang kerja lebih besar',      subEN: 'Advance your career and earn more' },
-  { id: 'business', icon: '🤝', ID: 'Meeting & Presentasi',     EN: 'Business Communication', subID: 'Rapat, negosiasi, dan presentasi profesional', subEN: 'Meetings, negotiations, presentations' },
-  { id: 'daily',    icon: '💬', ID: 'Percakapan Sehari-hari',   EN: 'Daily Conversation',    subID: 'Ngobrol lebih lancar dan percaya diri',       subEN: 'Speak fluently and confidently' },
-  { id: 'travel',   icon: '✈️', ID: 'Perjalanan & Internasional', EN: 'Travel & International', subID: 'Komunikasi saat bepergian ke luar negeri',    subEN: 'Communicate confidently abroad' },
-]
+  // 5 vocab flashcards for today
+  const vStart = ((day - 1) * 5) % vList.length
+  const vocabCards = Array.from({ length: 5 }, (_, i) => vList[(vStart + i) % vList.length])
 
-const LEVELS = [
-  { id: 'lower',  badge: 'A1–A2', ID: 'Pemula',    EN: 'Beginner',     subID: 'Saya tahu sedikit kata-kata dasar',                  subEN: 'I know basic words and simple phrases',           color: '#059669' },
-  { id: 'medium', badge: 'B1–B2', ID: 'Menengah',  EN: 'Intermediate', subID: 'Saya bisa berbicara, tapi masih sering salah',        subEN: 'I can hold a conversation but make errors',       color: '#0D47A1' },
-  { id: 'high',   badge: 'C1',    ID: 'Mahir',     EN: 'Advanced',     subID: 'Cukup lancar, ingin terdengar lebih profesional',     subEN: 'Fluent, but want to sound more professional',     color: '#7C3AED' },
-]
+  // Grammar lesson
+  const gIdx = (week - 1) % GRAMMAR_BANK.length
+  const grammar = GRAMMAR_BANK[gIdx]
 
-const COMMUNITIES = [
-  { id: 'work',   icon: '🏢', ID: 'Komunitas Profesional',    EN: 'Professional / Workplace' },
-  { id: 'faith',  icon: '⛪', ID: 'Komunitas Gereja / Iman',  EN: 'Church / Faith Community' },
-  { id: 'campus', icon: '🎓', ID: 'Komunitas Kampus',         EN: 'University / Campus' },
-  { id: 'social', icon: '👥', ID: 'Komunitas Umum',           EN: 'General / Social' },
-]
+  // Reading passage
+  const reading = READING_BANK[(day - 1) % READING_BANK.length]
 
-const LESSONS = {
-  lower: {
-    word: 'SCHEDULE', phonetic: '/ˈsked.juːl/',
-    meaningID: 'Jadwal / Menjadwalkan', meaningEN: 'A plan that gives times for events',
-    sentenceEN: 'Can we schedule a meeting for Monday?', sentenceID: 'Bisakah kita jadwalkan rapat hari Senin?',
-    quizQID: 'Apa arti kalimat ini?', quizQEN: 'What does this mean?',
-    quizSentence: '"Can we schedule a call?"',
-    opts: [
-      { ID: 'Bisakah kita batalkan panggilan?',   EN: 'Can we cancel the call?' },
-      { ID: 'Bisakah kita jadwalkan panggilan?',  EN: 'Can we arrange a call?' },
-      { ID: 'Bisakah kita rekam panggilan?',      EN: 'Can we record the call?' },
-      { ID: 'Bisakah kita lewatkan panggilan?',   EN: 'Can we skip the call?' },
-    ],
-    ans: 1,
-    tipID: 'Di Batam, frasa ini sangat umum dalam koordinasi dengan klien Singapore. Gunakan di email atau WhatsApp profesional.',
-    tipEN: 'In Batam, this phrase is common when coordinating with Singapore clients. Use it in professional emails or WhatsApp.',
-  },
-  medium: {
-    word: 'NEGOTIATE', phonetic: '/nɪˈɡoʊ.ʃi.eɪt/',
-    meaningID: 'Bernegosiasi / Merundingkan', meaningEN: 'To discuss in order to reach agreement',
-    sentenceEN: 'We need to negotiate the contract terms before Friday.', sentenceID: 'Kita perlu merundingkan syarat kontrak sebelum Jumat.',
-    quizQID: 'Kalimat mana yang paling profesional?', quizQEN: 'Which sentence is most professional?',
-    quizSentence: null,
-    opts: [
-      { ID: '"Your price is too high"',        EN: '"Your price is too high"' },
-      { ID: '"Give me a discount please"',     EN: '"Give me a discount please"' },
-      { ID: '"Can we negotiate the pricing?"', EN: '"Can we negotiate the pricing?"' },
-      { ID: '"I want it cheaper"',             EN: '"I want it cheaper"' },
-    ],
-    ans: 2,
-    tipID: 'Di zona perdagangan bebas Batam, kemampuan negosiasi dalam bahasa Inggris adalah kompetensi yang paling dicari perusahaan joint-venture.',
-    tipEN: "In Batam's free trade zone, English negotiation is the most sought-after skill at joint-venture companies.",
-  },
-  high: {
-    word: 'LEVERAGE', phonetic: '/ˈlev.ər.ɪdʒ/',
-    meaningID: 'Memanfaatkan / Keunggulan strategis', meaningEN: 'To use something to maximum advantage',
-    sentenceEN: 'We can leverage our local network to secure the Singapore contract.', sentenceID: 'Kita bisa memanfaatkan jaringan lokal untuk mengamankan kontrak Singapore.',
-    quizQID: 'Mana yang tepat dalam konteks bisnis?', quizQEN: 'Which use is correct in a business context?',
-    quizSentence: null,
-    opts: [
-      { ID: '"We leverage our team\'s expertise"', EN: '"We leverage our team\'s expertise"' },
-      { ID: '"The leverage was too big"',          EN: '"The leverage was too big"' },
-      { ID: '"I leveraged to the meeting"',        EN: '"I leveraged to the meeting"' },
-      { ID: '"She is a great leverage"',           EN: '"She is a great leverage"' },
-    ],
-    ans: 0,
-    tipID: '"Leverage" sering muncul di pitch deck dan board meeting perusahaan Batam dengan investor Singapore.',
-    tipEN: '"Leverage" frequently appears in pitch decks and board meetings between Batam firms and Singapore investors.',
-  },
+  // Speaking prompts
+  const speakingEntry = SPEAKING_BANK.find(s => s.week === week) || SPEAKING_BANK[0]
+
+  // Quiz: 5 vocab MCQ with stable deterministic distractors
+  const qStart = ((day - 1) * 3) % vList.length
+  const quizWords = Array.from({ length: 5 }, (_, i) => vList[(qStart + i) % vList.length])
+  const quizQuestions = quizWords.map((w, i) => {
+    const distractors = [2, 5, 11].map(offset =>
+      vList[(qStart + i + offset) % vList.length]?.meaningEN || 'A formal business arrangement'
+    )
+    const opts = [w.meaningEN, ...distractors]
+    // Deterministic sort using day + position as seed
+    opts.sort((a, b) => ((a.charCodeAt(0) * (day + i)) % 4) - ((b.charCodeAt(0) * (day + i)) % 4))
+    return { word: w.word, phonetic: w.phonetic, answer: w.meaningEN, options: opts }
+  })
+
+  const curriculumWeek = CURRICULUM_WEEKS.find(c => c.week === week) || CURRICULUM_WEEKS[0]
+  return { vocabCards, grammar, reading, speakingEntry, quizQuestions, week, curriculumWeek }
 }
 
-// ─── Utilities ────────────────────────────────────────────────────────────────
+/* ═══════════════════════════════════════════════════════════════════════════════
+   MAIN COMPONENT
+═══════════════════════════════════════════════════════════════════════════════ */
+export default function FluentEdge() {
+  // ── Core ─────────────────────────────────────────────────────────────────────
+  const [screen, setScreen]   = useState('splash')
+  const [lang,   setLang]     = useState('id')
 
-function speak(text) {
-  if (typeof window === 'undefined') return
-  const u = new SpeechSynthesisUtterance(text)
-  u.lang = 'en-US'; u.rate = 0.82
-  window.speechSynthesis.cancel()
-  window.speechSynthesis.speak(u)
-}
+  // ── Survey ────────────────────────────────────────────────────────────────────
+  const [goal,     setGoal]     = useState(null)
+  const [level,    setLevel]    = useState(null)
+  const [industry, setIndustry] = useState(null)
+  const [faith,    setFaith]    = useState(null)
 
-// ─── Shared UI Primitives ─────────────────────────────────────────────────────
+  // ── Registration ──────────────────────────────────────────────────────────────
+  const [regName,  setRegName]  = useState('')
+  const [regPhone, setRegPhone] = useState('')
+  const [profile,  setProfile]  = useState(null)
 
-function PageWrap({ children, style = {} }) {
-  return (
-    <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column', ...style }}>
-      {children}
-    </div>
-  )
-}
+  // ── Progress ──────────────────────────────────────────────────────────────────
+  const [xp,            setXp]            = useState(0)
+  const [streak,        setStreak]        = useState(0)
+  const [day,           setDay]           = useState(1)
+  const [completedDays, setCompletedDays] = useState([])
 
-function Card({ children, style = {}, onClick }) {
-  return (
-    <div onClick={onClick} style={{
-      background: C.surface, borderRadius: C.radiusLg,
-      border: `1px solid ${C.border}`, boxShadow: C.shadowSm,
-      ...style,
-    }}>
-      {children}
-    </div>
-  )
-}
+  // ── Lesson ────────────────────────────────────────────────────────────────────
+  const [lessonData, setLessonData] = useState(null)
+  const [actIdx,     setActIdx]     = useState(0)   // 0=vocab 1=grammar 2=reading 3=quiz 4=speaking
+  const [cardIdx,    setCardIdx]    = useState(0)   // vocab card index
+  const [flipped,    setFlipped]    = useState(false)
+  const [qIdx,       setQIdx]       = useState(0)   // question index
+  const [selected,   setSelected]   = useState(null)
+  const [feedback,   setFeedback]   = useState(null) // 'correct' | 'wrong'
+  const [lessonXp,   setLessonXp]   = useState(0)
 
-function PrimaryBtn({ children, onClick, disabled, style = {} }) {
-  return (
-    <button onClick={onClick} disabled={disabled} style={{
-      width: '100%', padding: '16px 24px', borderRadius: C.radius,
-      background: disabled ? '#94A3B8' : C.cta,
-      color: '#fff', fontWeight: 700, fontSize: 16,
-      border: 'none', cursor: disabled ? 'not-allowed' : 'pointer',
-      letterSpacing: 0.2, transition: 'background 0.15s',
-      boxShadow: disabled ? 'none' : `0 2px 8px ${C.cta}50`,
-      ...style,
-    }}>
-      {children}
-    </button>
-  )
-}
+  // ── Plan loading ──────────────────────────────────────────────────────────────
+  const [loadStep, setLoadStep] = useState(0)
 
-function BackBtn({ onClick, lang }) {
-  return (
-    <button onClick={onClick} style={{
-      display: 'inline-flex', alignItems: 'center', gap: 6,
-      background: 'none', border: 'none', color: C.textMuted,
-      fontSize: 14, fontWeight: 500, padding: '0 0 20px',
-      cursor: 'pointer',
-    }}>
-      <span style={{ fontSize: 16 }}>←</span> {lang === 'ID' ? 'Kembali' : 'Back'}
-    </button>
-  )
-}
-
-function StepLabel({ step, total, lang }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-      <div style={{ display: 'flex', gap: 6 }}>
-        {Array.from({ length: total }, (_, i) => (
-          <div key={i} style={{
-            width: i + 1 === step ? 20 : 8, height: 6, borderRadius: 100,
-            background: i + 1 <= step ? C.primary : C.border,
-            transition: 'all 0.3s',
-          }} />
-        ))}
-      </div>
-      <span style={{ color: C.textLight, fontSize: 12, fontWeight: 600 }}>
-        {lang === 'ID' ? `${step} / ${total}` : `${step} of ${total}`}
-      </span>
-    </div>
-  )
-}
-
-function LangToggle({ lang, onToggle }) {
-  return (
-    <button onClick={onToggle} style={{
-      position: 'fixed', top: 16, right: 16, zIndex: 1000,
-      background: C.surface, border: `1px solid ${C.border}`,
-      borderRadius: 99, padding: '7px 14px',
-      color: C.textMuted, fontWeight: 600, fontSize: 13,
-      boxShadow: C.shadowSm, cursor: 'pointer',
-      display: 'flex', alignItems: 'center', gap: 6,
-    }}>
-      {lang === 'ID' ? '🇬🇧 EN' : '🇮🇩 ID'}
-    </button>
-  )
-}
-
-// ─── Main ─────────────────────────────────────────────────────────────────────
-
-export default function Home() {
-  const [lang, setLang] = useState('ID')
-  const [screen, setScreen] = useState('splash')
-  const [goal, setGoal] = useState(null)
-  const [level, setLevel] = useState(null)
-  const [community, setCommunity] = useState(null)
-  const [buildPct, setBuildPct] = useState(0)
-  const [lessonStep, setLessonStep] = useState(0)
-  const [quizAnswer, setQuizAnswer] = useState(null)
-  const [xp, setXP] = useState(0)
-  const [speaking, setSpeaking] = useState(false)
-  const [name, setName] = useState('')
-  const [phone, setPhone] = useState('')
-  const [refFrom, setRefFrom] = useState('')
-  const [refCode, setRefCode] = useState('')
-  const [submitting, setSubmitting] = useState(false)
-  const [submitError, setSubmitError] = useState('')
-  const [copied, setCopied] = useState(false)
-
-  const t = (id, en) => lang === 'ID' ? id : en
-  const ls = LESSONS[level] || LESSONS.medium
-
+  // ── Init from localStorage ───────────────────────────────────────────────────
   useEffect(() => {
-    const saved = localStorage.getItem('fe_lang')
-    if (saved === 'EN' || saved === 'ID') setLang(saved)
-    const p = new URLSearchParams(window.location.search)
-    if (p.get('ref')) setRefFrom(p.get('ref'))
+    try {
+      const sl = localStorage.getItem('fe_lang')
+      if (sl) setLang(sl)
+
+      const sp = localStorage.getItem('fe_profile')
+      if (sp) {
+        const p = JSON.parse(sp)
+        setProfile(p)
+        setGoal(p.goal); setLevel(p.level); setIndustry(p.industry); setFaith(p.faith)
+      }
+
+      const prog = localStorage.getItem('fe_progress')
+      if (prog) {
+        const pr = JSON.parse(prog)
+        setXp(pr.xp || 0); setStreak(pr.streak || 0)
+        setDay(pr.day || 1); setCompletedDays(pr.completedDays || [])
+      }
+
+      if (sp) setScreen('dashboard')
+    } catch {}
   }, [])
 
-  const toggleLang = () => {
-    const next = lang === 'ID' ? 'EN' : 'ID'
-    setLang(next); localStorage.setItem('fe_lang', next)
-  }
+  useEffect(() => { localStorage.setItem('fe_lang', lang) }, [lang])
 
-  // Splash auto-advance
+  // Plan loading animation
   useEffect(() => {
-    if (screen !== 'splash') return
-    const t = setTimeout(() => setScreen('goal'), 2600)
-    return () => clearTimeout(t)
+    if (screen !== 'plan-loading') return
+    const timers = [500, 1200, 2100, 2900].map((delay, i) =>
+      setTimeout(() => setLoadStep(i + 1), delay)
+    )
+    const done = setTimeout(() => setScreen('plan-reveal'), 3600)
+    return () => { timers.forEach(clearTimeout); clearTimeout(done) }
   }, [screen])
 
-  // Building animation
-  useEffect(() => {
-    if (screen !== 'building') return
-    setBuildPct(0)
-    let v = 0
-    const iv = setInterval(() => {
-      v += Math.random() * 20 + 5
-      if (v >= 100) {
-        v = 100; clearInterval(iv)
-        setTimeout(() => { setLessonStep(0); setQuizAnswer(null); setScreen('lesson') }, 500)
-      }
-      setBuildPct(Math.min(v, 100))
-    }, 160)
-    return () => clearInterval(iv)
-  }, [screen])
+  // ── Helpers ───────────────────────────────────────────────────────────────────
+  const t = (en, id) => lang === 'en' ? en : id
 
-  async function handleRegister() {
-    if (!phone.trim()) { setSubmitError(t('Masukkan nomor WhatsApp', 'Enter your WhatsApp number')); return }
-    setSubmitting(true); setSubmitError('')
+  function speak(text) {
     try {
-      const res = await fetch('/api/register', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: name.trim() || t('Pengguna FluentEdge', 'FluentEdge User'),
-          whatsapp: phone.trim(), city: 'Batam',
-          level: level || 'medium', score: xp,
-          referralFrom: refFrom, religion: community, community,
-        }),
+      window.speechSynthesis?.cancel()
+      const utt = new SpeechSynthesisUtterance(text)
+      utt.lang = 'en-US'; utt.rate = 0.82; utt.pitch = 1.0
+      window.speechSynthesis?.speak(utt)
+    } catch {}
+  }
+
+  function startLesson() {
+    const data = getLessonContent(day, level || 'beginner')
+    setLessonData(data)
+    setActIdx(0); setCardIdx(0); setFlipped(false)
+    setQIdx(0); setSelected(null); setFeedback(null); setLessonXp(0)
+    setScreen('lesson')
+  }
+
+  function awardXp(pts) { setLessonXp(p => p + pts) }
+
+  function nextAct() {
+    if (actIdx < 4) {
+      setActIdx(a => a + 1)
+      setQIdx(0); setSelected(null); setFeedback(null); setFlipped(false); setCardIdx(0)
+    } else {
+      finishLesson()
+    }
+  }
+
+  function finishLesson() {
+    const newXp       = xp + lessonXp
+    const newStreak   = streak + 1
+    const newCompleted = completedDays.includes(day) ? completedDays : [...completedDays, day]
+    const newDay      = completedDays.includes(day) ? day : day + 1
+    setXp(newXp); setStreak(newStreak); setCompletedDays(newCompleted); setDay(newDay)
+    localStorage.setItem('fe_progress', JSON.stringify({
+      xp: newXp, streak: newStreak, day: newDay, completedDays: newCompleted,
+    }))
+    setScreen('lesson-done')
+  }
+
+  async function submitReg(e) {
+    e.preventDefault()
+    const p = {
+      name: regName, phone: regPhone, goal, level, industry, faith,
+      religion: faith === 'faith' ? 'faith' : null,
+      joinedAt: new Date().toISOString(),
+    }
+    setProfile(p)
+    localStorage.setItem('fe_profile', JSON.stringify(p))
+    localStorage.setItem('fe_progress', JSON.stringify({ xp: 0, streak: 0, day: 1, completedDays: [] }))
+    try {
+      await fetch('/api/leads', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(p),
       })
-      const data = await res.json()
-      if (data.referralCode) { setRefCode(data.referralCode); setScreen('success') }
-      else setSubmitError(t('Terjadi kesalahan. Coba lagi.', 'Something went wrong. Please try again.'))
-    } catch { setSubmitError(t('Terjadi kesalahan. Coba lagi.', 'Something went wrong.')) }
-    finally { setSubmitting(false) }
+    } catch {}
+    setScreen('dashboard')
   }
 
-  function copyCode(text) {
-    navigator.clipboard?.writeText(text).catch(() => {})
-    setCopied(true); setTimeout(() => setCopied(false), 2000)
-  }
+  /* ═══════════════════════════════════════════════════════════════════════════
+     SPLASH
+  ═══════════════════════════════════════════════════════════════════════════ */
+  if (screen === 'splash') return (
+    <Shell lang={lang} setLang={setLang}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '48px 24px', textAlign: 'center' }}>
+        <div style={{ width: 76, height: 76, borderRadius: 22, background: `linear-gradient(135deg, ${C.accent} 0%, #818CF8 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 28, boxShadow: `0 0 56px ${C.accentGlow}, 0 0 120px rgba(99,102,241,0.06)` }}>
+          <span style={{ fontSize: 34 }}>⚡</span>
+        </div>
 
-  const waLink = (code) => {
-    const ref = code ? `?ref=${code}` : ''
-    return `https://wa.me/?text=${encodeURIComponent(t(
-      `Hei! Aku lagi belajar bahasa Inggris di FluentEdge — gratis dan profesional. Coba juga: https://fluent-english-id.vercel.app${ref}`,
-      `Hey! I'm learning professional English on FluentEdge — it's free and excellent. Try it: https://fluent-english-id.vercel.app${ref}`
-    ))}`
-  }
+        <p style={{ fontFamily: PJ, fontSize: 12, fontWeight: 700, letterSpacing: '0.18em', color: C.accent, textTransform: 'uppercase', marginBottom: 18 }}>FluentEdge</p>
 
-  // ─── Screens ────────────────────────────────────────────────────────────────
+        <h1 style={{ fontFamily: FR, fontSize: 42, fontWeight: 900, color: C.text, lineHeight: 1.1, marginBottom: 20, maxWidth: 340 }}>
+          {t('Speak English like the elite do.', 'Bicara Inggris seperti orang sukses.')}
+        </h1>
 
-  const Wrap = ({ children, noPad }) => (
-    <div style={{ maxWidth: 520, margin: '0 auto', padding: noPad ? 0 : '72px 20px 48px', width: '100%' }}>
-      {children}
-    </div>
+        <p style={{ fontFamily: PJ, fontSize: 15, color: C.textSec, lineHeight: 1.65, maxWidth: 300, marginBottom: 44 }}>
+          {t(
+            'A structured 6-month program for professionals in Batam — 60 minutes a day, every day.',
+            'Program 6 bulan terstruktur untuk profesional Batam — 60 menit sehari, setiap hari.'
+          )}
+        </p>
+
+        <div style={{ display: 'flex', gap: 28, marginBottom: 44 }}>
+          {[['180', t('Lessons', 'Pelajaran')], ['26', t('Weeks', 'Minggu')], ['6k+', t('Learners', 'Pelajar')]].map(([n, l]) => (
+            <div key={l} style={{ textAlign: 'center' }}>
+              <div style={{ fontFamily: FR, fontSize: 30, fontWeight: 800, color: C.accent }}>{n}</div>
+              <div style={{ fontFamily: PJ, fontSize: 12, color: C.textMuted, marginTop: 2 }}>{l}</div>
+            </div>
+          ))}
+        </div>
+
+        <button
+          onClick={() => setScreen('survey-goal')}
+          style={{ background: C.accent, color: '#fff', border: 'none', borderRadius: 16, padding: '18px 40px', fontSize: 17, fontWeight: 700, fontFamily: PJ, cursor: 'pointer', width: '100%', maxWidth: 360, boxShadow: `0 0 40px ${C.accentGlow}`, letterSpacing: '0.02em' }}>
+          {t('Start My Free Assessment →', 'Mulai Asesmen Gratis →')}
+        </button>
+
+        <p style={{ fontFamily: PJ, fontSize: 12, color: C.textMuted, marginTop: 14 }}>
+          {t('No payment · No credit card · 100% free', 'Tanpa bayaran · Tanpa kartu kredit · 100% gratis')}
+        </p>
+      </div>
+    </Shell>
   )
 
-  function Splash() {
-    return (
-      <div style={{
-        minHeight: '100vh', background: C.primary,
-        display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center',
-        padding: 32, textAlign: 'center',
-      }}>
-        {/* Logo mark */}
-        <div style={{
-          width: 72, height: 72, borderRadius: 20,
-          background: 'rgba(255,255,255,0.15)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          marginBottom: 24, border: '1.5px solid rgba(255,255,255,0.25)',
-        }}>
-          <span style={{ fontSize: 36 }}>📘</span>
-        </div>
-        <h1 style={{ fontSize: 36, fontWeight: 800, color: '#fff', letterSpacing: -0.5, marginBottom: 8 }}>
-          FluentEdge
-        </h1>
-        <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 16, fontWeight: 400, lineHeight: 1.6, maxWidth: 280 }}>
-          {t('Bahasa Inggris profesional untuk karir yang lebih baik', 'Professional English for a stronger career')}
-        </p>
-        <div style={{ display: 'flex', gap: 6, marginTop: 40 }}>
-          {[0,1,2].map(i => (
-            <div key={i} style={{
-              width: 6, height: 6, borderRadius: '50%',
-              background: i === 0 ? '#fff' : 'rgba(255,255,255,0.3)',
-              animation: 'pulse 1.4s ease-in-out infinite',
-              animationDelay: `${i * 0.2}s`,
-            }} />
-          ))}
-        </div>
-      </div>
-    )
-  }
+  /* ═══════════════════════════════════════════════════════════════════════════
+     SURVEY — GOAL
+  ═══════════════════════════════════════════════════════════════════════════ */
+  if (screen === 'survey-goal') return (
+    <Shell lang={lang} setLang={setLang}>
+      <SurveyLayout step={1} total={4}
+        headline={t('Why do you want to master English?', 'Kenapa kamu ingin mahir bahasa Inggris?')}
+        sub={t("We'll tailor your plan to your specific goal.", 'Kami sesuaikan programmu dengan tujuanmu.')}>
+        {[
+          { id: 'career',    icon: '💼', en: 'Career Growth',        id_: 'Karir & Promosi',         desc: t('Get promoted, earn more, impress leadership',           'Naik jabatan, gaji lebih tinggi, impress atasan') },
+          { id: 'business',  icon: '🤝', en: 'Business & Trade',     id_: 'Bisnis & Perdagangan',    desc: t('Deal with Singapore clients and partners',             'Deal dengan klien dan mitra Singapura') },
+          { id: 'travel',    icon: '✈️', en: 'Global Mobility',      id_: 'Mobilitas Global',        desc: t('Travel, study, and work abroad with confidence',       'Bepergian dan bekerja di luar negeri') },
+          { id: 'education', icon: '📚', en: 'Academic Excellence',  id_: 'Pendidikan Lebih Tinggi', desc: t('Scholarships, exams, overseas study',                  'Beasiswa, ujian, kuliah ke luar negeri') },
+        ].map(opt => (
+          <SurveyCard key={opt.id} icon={opt.icon} title={t(opt.en, opt.id_)} desc={opt.desc}
+            selected={goal === opt.id}
+            onClick={() => { setGoal(opt.id); setTimeout(() => setScreen('survey-level'), 280) }} />
+        ))}
+      </SurveyLayout>
+    </Shell>
+  )
 
-  function Goal() {
-    return (
-      <PageWrap>
-        <LangToggle lang={lang} onToggle={toggleLang} />
-        <Wrap>
-          {/* Header brand strip */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 32 }}>
-            <div style={{ width: 32, height: 32, borderRadius: 8, background: C.primary, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontSize: 16 }}>📘</span>
-            </div>
-            <span style={{ fontWeight: 800, fontSize: 16, color: C.primary }}>FluentEdge</span>
-          </div>
+  /* ═══════════════════════════════════════════════════════════════════════════
+     SURVEY — LEVEL
+  ═══════════════════════════════════════════════════════════════════════════ */
+  if (screen === 'survey-level') return (
+    <Shell lang={lang} setLang={setLang}>
+      <SurveyLayout step={2} total={4}
+        headline={t('How is your English right now?', 'Seberapa bagus Bahasa Inggris kamu sekarang?')}
+        sub={t("Be honest — we'll meet you exactly where you are.", 'Jawab jujur — kami mulai dari levelmu.')}>
+        {[
+          { id: 'beginner',     icon: '🌱', en: 'Beginner',     id_: 'Pemula',   desc: t('I know basic words but struggle with full sentences', 'Tahu kata-kata dasar tapi susah buat kalimat') },
+          { id: 'intermediate', icon: '⚡', en: 'Intermediate', id_: 'Menengah', desc: t('I can communicate but make mistakes often',           'Bisa berkomunikasi tapi masih sering salah') },
+          { id: 'advanced',     icon: '🏆', en: 'Advanced',     id_: 'Mahir',    desc: t("I'm fairly fluent but want to sound more professional", 'Cukup lancar tapi mau lebih profesional') },
+        ].map(opt => (
+          <SurveyCard key={opt.id} icon={opt.icon} title={t(opt.en, opt.id_)} desc={opt.desc}
+            selected={level === opt.id}
+            onClick={() => { setLevel(opt.id); setTimeout(() => setScreen('survey-industry'), 280) }} />
+        ))}
+      </SurveyLayout>
+    </Shell>
+  )
 
-          <StepLabel step={1} total={3} lang={lang} />
+  /* ═══════════════════════════════════════════════════════════════════════════
+     SURVEY — INDUSTRY
+  ═══════════════════════════════════════════════════════════════════════════ */
+  if (screen === 'survey-industry') return (
+    <Shell lang={lang} setLang={setLang}>
+      <SurveyLayout step={3} total={4}
+        headline={t("What's your field?", 'Apa bidang pekerjaanmu?')}
+        sub={t('Your lessons will use real scenarios from your industry.', 'Pelajaranmu disesuaikan dengan industri dan situasimu.')}>
+        {[
+          { id: 'manufacturing', icon: '🏭', en: 'Manufacturing',       id_: 'Manufaktur & Pabrik' },
+          { id: 'trading',       icon: '📦', en: 'Trading & Logistics', id_: 'Trading & Logistik' },
+          { id: 'finance',       icon: '💳', en: 'Finance & Banking',   id_: 'Keuangan & Perbankan' },
+          { id: 'technology',    icon: '💻', en: 'Technology',          id_: 'Teknologi & IT' },
+          { id: 'hospitality',   icon: '🏨', en: 'Hospitality',         id_: 'Perhotelan & Pariwisata' },
+          { id: 'other',         icon: '🌐', en: 'Other',               id_: 'Lainnya' },
+        ].map(opt => (
+          <SurveyCard key={opt.id} icon={opt.icon} title={t(opt.en, opt.id_)} compact
+            selected={industry === opt.id}
+            onClick={() => { setIndustry(opt.id); setTimeout(() => setScreen('survey-faith'), 280) }} />
+        ))}
+      </SurveyLayout>
+    </Shell>
+  )
 
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: C.text, lineHeight: 1.25, marginBottom: 8 }}>
-            {t('Apa tujuanmu belajar bahasa Inggris?', "What's your English goal?")}
-          </h1>
-          <p style={{ color: C.textMuted, fontSize: 15, marginBottom: 28, lineHeight: 1.6 }}>
-            {t('Pilih satu — kami akan menyesuaikan program belajarmu', 'Choose one — we\'ll tailor your programme')}
-          </p>
+  /* ═══════════════════════════════════════════════════════════════════════════
+     SURVEY — FAITH
+  ═══════════════════════════════════════════════════════════════════════════ */
+  if (screen === 'survey-faith') return (
+    <Shell lang={lang} setLang={setLang}>
+      <SurveyLayout step={4} total={4}
+        headline={t('One last thing…', 'Satu hal lagi…')}
+        sub={t('Are you part of a spiritual community? (Optional)', 'Apakah kamu bagian dari komunitas iman? (Opsional)')}>
+        {[
+          { id: 'faith', icon: '✝️', en: "Yes, I'm part of a faith community",  id_: 'Ya, saya bagian dari komunitas iman' },
+          { id: 'other', icon: '🤲', en: 'I practice a different faith',         id_: 'Saya memeluk kepercayaan lain' },
+          { id: 'none',  icon: '🙅', en: "I'd rather not say",                   id_: 'Saya tidak ingin berbagi' },
+        ].map(opt => (
+          <SurveyCard key={opt.id} icon={opt.icon} title={t(opt.en, opt.id_)} compact
+            selected={faith === opt.id}
+            onClick={() => { setFaith(opt.id); setTimeout(() => setScreen('plan-loading'), 280) }} />
+        ))}
+      </SurveyLayout>
+    </Shell>
+  )
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {GOALS.map(g => (
-              <button key={g.id}
-                onClick={() => { setGoal(g.id); setScreen('level') }}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 16,
-                  padding: '18px 20px', borderRadius: C.radiusLg,
-                  background: goal === g.id ? C.primaryLight : C.surface,
-                  border: `1.5px solid ${goal === g.id ? C.primary : C.border}`,
-                  cursor: 'pointer', textAlign: 'left',
-                  boxShadow: C.shadowSm, transition: 'all 0.15s',
-                }}>
-                <div style={{
-                  width: 48, height: 48, borderRadius: 12, flexShrink: 0,
-                  background: goal === g.id ? `${C.primary}18` : C.bg,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 24,
-                }}>{g.icon}</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 700, fontSize: 15, color: C.text, marginBottom: 2 }}>{g[lang]}</div>
-                  <div style={{ fontSize: 13, color: C.textMuted, lineHeight: 1.4 }}>{lang === 'ID' ? g.subID : g.subEN}</div>
-                </div>
-                <div style={{ color: goal === g.id ? C.primary : C.textLight, fontSize: 18, fontWeight: 300 }}>›</div>
-              </button>
-            ))}
-          </div>
-        </Wrap>
-      </PageWrap>
-    )
-  }
-
-  function Level() {
-    return (
-      <PageWrap>
-        <LangToggle lang={lang} onToggle={toggleLang} />
-        <Wrap>
-          <BackBtn onClick={() => setScreen('goal')} lang={lang} />
-          <StepLabel step={2} total={3} lang={lang} />
-
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: C.text, lineHeight: 1.25, marginBottom: 8 }}>
-            {t('Seberapa lancar bahasa Inggrismu?', "How's your English right now?")}
-          </h1>
-          <p style={{ color: C.textMuted, fontSize: 15, marginBottom: 28, lineHeight: 1.6 }}>
-            {t('Jujur saja — tidak ada jawaban yang salah', "Be honest — there's no wrong answer")}
-          </p>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {LEVELS.map(lv => (
-              <button key={lv.id}
-                onClick={() => { setLevel(lv.id); setScreen('community') }}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 16,
-                  padding: '18px 20px', borderRadius: C.radiusLg,
-                  background: level === lv.id ? C.primaryLight : C.surface,
-                  border: `1.5px solid ${level === lv.id ? C.primary : C.border}`,
-                  cursor: 'pointer', textAlign: 'left',
-                  boxShadow: C.shadowSm, transition: 'all 0.15s',
-                }}>
-                <div style={{
-                  flexShrink: 0, borderRadius: 8, padding: '5px 12px',
-                  background: `${lv.color}18`, border: `1px solid ${lv.color}40`,
-                  color: lv.color, fontWeight: 800, fontSize: 12, whiteSpace: 'nowrap',
-                }}>{lv.badge}</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 700, fontSize: 15, color: C.text, marginBottom: 2 }}>{lv[lang]}</div>
-                  <div style={{ fontSize: 13, color: C.textMuted, lineHeight: 1.4 }}>{lang === 'ID' ? lv.subID : lv.subEN}</div>
-                </div>
-                <div style={{ color: level === lv.id ? C.primary : C.textLight, fontSize: 18, fontWeight: 300 }}>›</div>
-              </button>
-            ))}
-          </div>
-        </Wrap>
-      </PageWrap>
-    )
-  }
-
-  function Community() {
-    return (
-      <PageWrap>
-        <LangToggle lang={lang} onToggle={toggleLang} />
-        <Wrap>
-          <BackBtn onClick={() => setScreen('level')} lang={lang} />
-          <StepLabel step={3} total={3} lang={lang} />
-
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: C.text, lineHeight: 1.25, marginBottom: 8 }}>
-            {t('Kamu aktif di komunitas mana?', 'Which community are you part of?')}
-          </h1>
-          <p style={{ color: C.textMuted, fontSize: 15, marginBottom: 28, lineHeight: 1.6 }}>
-            {t('Kami akan menyesuaikan materi dengan konteks komunitasmu', "We'll tailor content to your community context")}
-          </p>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            {COMMUNITIES.map(c => (
-              <button key={c.id}
-                onClick={() => { setCommunity(c.id); setScreen('building') }}
-                style={{
-                  padding: '22px 16px', borderRadius: C.radiusLg, textAlign: 'center',
-                  background: community === c.id ? C.primaryLight : C.surface,
-                  border: `1.5px solid ${community === c.id ? C.primary : C.border}`,
-                  cursor: 'pointer', boxShadow: C.shadowSm, transition: 'all 0.15s',
-                }}>
-                <div style={{ fontSize: 30, marginBottom: 10 }}>{c.icon}</div>
-                <div style={{ fontWeight: 600, fontSize: 13, color: C.text, lineHeight: 1.4 }}>{c[lang]}</div>
-              </button>
-            ))}
-          </div>
-        </Wrap>
-      </PageWrap>
-    )
-  }
-
-  function Building() {
-    const pct = Math.round(buildPct)
+  /* ═══════════════════════════════════════════════════════════════════════════
+     PLAN LOADING
+  ═══════════════════════════════════════════════════════════════════════════ */
+  if (screen === 'plan-loading') {
     const steps = [
-      { min: 0,  ID: 'Menganalisa tujuanmu...', EN: 'Analysing your goals...' },
-      { min: 30, ID: 'Menyesuaikan level...', EN: 'Calibrating your level...' },
-      { min: 60, ID: 'Menyiapkan konten Batam...', EN: 'Preparing Batam content...' },
-      { min: 88, ID: 'Jalur belajarmu siap!', EN: 'Your learning path is ready!' },
+      t('Analysing your English level…', 'Menganalisa level Bahasa Inggrismu…'),
+      t('Mapping your industry vocabulary…', 'Memetakan kosakata industrimu…'),
+      t('Designing your 6-month curriculum…', 'Merancang kurikulum 6 bulanmu…'),
+      t('Building your daily schedule…', 'Membangun jadwal harianmu…'),
     ]
-    const step = steps.filter(s => pct >= s.min).pop()
     return (
-      <div style={{ minHeight: '100vh', background: C.primary, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 40, textAlign: 'center' }}>
-        <div style={{ width: 64, height: 64, borderRadius: 18, background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 28, border: '1.5px solid rgba(255,255,255,0.2)' }}>
-          <span style={{ fontSize: 32 }}>✨</span>
-        </div>
-        <h2 style={{ fontSize: 24, fontWeight: 800, color: '#fff', marginBottom: 8 }}>
-          {t('Menyiapkan jalur belajarmu', 'Building your learning path')}
-        </h2>
-        <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 15, marginBottom: 40, minHeight: 22 }}>
-          {step?.[lang]}
-        </p>
-
-        <div style={{ width: '100%', maxWidth: 300 }}>
-          <div style={{ background: 'rgba(255,255,255,0.2)', borderRadius: 100, height: 6, overflow: 'hidden', marginBottom: 10 }}>
-            <div style={{ width: `${buildPct}%`, height: '100%', background: '#fff', borderRadius: 100, transition: 'width 0.25s ease' }} />
-          </div>
-          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>{pct}%</p>
-        </div>
-
-        <div style={{ display: 'flex', gap: 32, marginTop: 48 }}>
-          {[
-            { label: { ID: 'Level', EN: 'Level' }, val: LEVELS.find(l => l.id === level)?.[lang] || '—' },
-            { label: { ID: 'Tujuan', EN: 'Goal' }, val: GOALS.find(g => g.id === goal)?.[lang] || '—' },
-          ].map((item, i) => (
-            <div key={i} style={{ textAlign: 'center' }}>
-              <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11, fontWeight: 700, letterSpacing: 1.5, marginBottom: 4 }}>
-                {item.label[lang].toUpperCase()}
+      <Shell lang={lang} setLang={setLang}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '40px 24px', textAlign: 'center' }}>
+          <div style={{ width: 72, height: 72, borderRadius: '50%', border: `3px solid ${C.border}`, borderTop: `3px solid ${C.accent}`, animation: 'spin 1s linear infinite', marginBottom: 36 }} />
+          <h2 style={{ fontFamily: FR, fontSize: 28, fontWeight: 800, color: C.text, marginBottom: 8 }}>
+            {t('Building your plan…', 'Membuat rencanamu…')}
+          </h2>
+          <p style={{ fontFamily: PJ, fontSize: 14, color: C.textMuted, marginBottom: 40 }}>
+            {t('Personalised for your level and goals.', 'Dipersonalisasi untuk level dan tujuanmu.')}
+          </p>
+          <div style={{ width: '100%', maxWidth: 300 }}>
+            {steps.map((s, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '10px 0', opacity: i < loadStep ? 1 : 0.22, transition: 'opacity 0.5s ease' }}>
+                <div style={{ width: 22, height: 22, borderRadius: '50%', background: i < loadStep ? C.success : C.border, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background 0.4s' }}>
+                  {i < loadStep && <span style={{ color: '#fff', fontWeight: 700, fontSize: 12 }}>✓</span>}
+                </div>
+                <span style={{ fontFamily: PJ, fontSize: 14, color: i < loadStep ? C.text : C.textMuted, textAlign: 'left' }}>{s}</span>
               </div>
-              <div style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>{item.val}</div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      </Shell>
     )
   }
 
-  function Lesson() {
-    const lvInfo = LEVELS.find(l => l.id === level) || LEVELS[1]
+  /* ═══════════════════════════════════════════════════════════════════════════
+     PLAN REVEAL
+  ═══════════════════════════════════════════════════════════════════════════ */
+  if (screen === 'plan-reveal') {
+    const lvlLabel  = { beginner: t('Beginner A1–A2', 'Pemula A1–A2'), intermediate: t('Intermediate B1–B2', 'Menengah B1–B2'), advanced: t('Advanced C1', 'Mahir C1') }
+    const goalLabel = { career: t('Career Growth', 'Karir & Promosi'), business: t('Business & Trade', 'Bisnis & Perdagangan'), travel: t('Global Mobility', 'Mobilitas Global'), education: t('Academic Excellence', 'Pendidikan Tinggi') }
+    const targetLevel = level === 'beginner' ? 'B2' : level === 'intermediate' ? 'C1' : 'C2'
 
-    const ProgressBar = ({ step, total }) => (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
-        <span style={{ fontSize: 12, fontWeight: 700, color: C.primary, background: C.primaryLight, padding: '3px 10px', borderRadius: 99 }}>
-          {t('PELAJARAN 1', 'LESSON 1')}
-        </span>
-        <div style={{ flex: 1, height: 4, background: C.border, borderRadius: 100, overflow: 'hidden' }}>
-          <div style={{ width: `${(step / total) * 100}%`, height: '100%', background: C.primary, borderRadius: 100, transition: 'width 0.4s ease' }} />
-        </div>
-        <span style={{ fontSize: 12, color: C.textLight, fontWeight: 600 }}>{step}/{total}</span>
-      </div>
-    )
+    return (
+      <Shell lang={lang} setLang={setLang}>
+        <div style={{ padding: '48px 24px 40px', maxWidth: 420, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 36 }}>
+            <div style={{ fontSize: 52, marginBottom: 18 }}>🎯</div>
+            <h1 style={{ fontFamily: FR, fontSize: 32, fontWeight: 900, color: C.text, marginBottom: 12 }}>
+              {t('Your Plan is Ready', 'Rencanamu Sudah Siap')}
+            </h1>
+            <p style={{ fontFamily: PJ, fontSize: 15, color: C.textSec, lineHeight: 1.6 }}>
+              {t('A personalised 6-month English mastery program — built just for you.', 'Program penguasaan Bahasa Inggris 6 bulan — dibuat khusus untukmu.')}
+            </p>
+          </div>
 
-    // Step 0: Vocabulary
-    if (lessonStep === 0) return (
-      <PageWrap>
-        <LangToggle lang={lang} onToggle={toggleLang} />
-        <Wrap>
-          <ProgressBar step={1} total={3} />
-
-          <h2 style={{ fontSize: 22, fontWeight: 800, color: C.text, marginBottom: 20 }}>
-            {t('Kata Baru Hari Ini', "Today's New Word")}
-          </h2>
-
-          {/* Word card */}
-          <Card style={{ padding: '28px 24px', marginBottom: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
+          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, padding: 24, marginBottom: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
               <div>
-                <div style={{ fontSize: 34, fontWeight: 800, color: C.primary, letterSpacing: 1, marginBottom: 4 }}>
-                  {ls.word}
+                <p style={{ fontFamily: PJ, fontSize: 11, color: C.textMuted, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{t('YOUR LEVEL', 'LEVELMU')}</p>
+                <p style={{ fontFamily: PJ, fontSize: 15, fontWeight: 700, color: C.text }}>{lvlLabel[level] || t('Beginner', 'Pemula')}</p>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ fontFamily: PJ, fontSize: 11, color: C.textMuted, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{t('YOUR GOAL', 'TUJUANMU')}</p>
+                <p style={{ fontFamily: PJ, fontSize: 15, fontWeight: 700, color: C.text }}>{goalLabel[goal] || t('Career', 'Karir')}</p>
+              </div>
+            </div>
+            {[
+              { icon: '⏱️', label: t('Daily practice', 'Latihan harian'),   value: '60 min' },
+              { icon: '📖', label: t('Total lessons', 'Total pelajaran'),    value: '180' },
+              { icon: '💬', label: t('Vocabulary words', 'Kosakata baru'),   value: '1,200+' },
+              { icon: '📅', label: t('Program duration', 'Durasi program'),  value: t('26 weeks', '26 minggu') },
+              { icon: '🏁', label: t('Target level', 'Target level'),        value: targetLevel },
+            ].map(s => (
+              <div key={s.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderTop: `1px solid ${C.border}` }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontSize: 18 }}>{s.icon}</span>
+                  <span style={{ fontFamily: PJ, fontSize: 14, color: C.textSec }}>{s.label}</span>
                 </div>
-                <div style={{ color: C.textMuted, fontSize: 14 }}>{ls.phonetic}</div>
+                <span style={{ fontFamily: FR, fontSize: 18, fontWeight: 700, color: C.accent }}>{s.value}</span>
               </div>
-              <div style={{ flexShrink: 0, padding: '4px 12px', borderRadius: 8, background: `${lvInfo.color}15`, border: `1px solid ${lvInfo.color}30`, color: lvInfo.color, fontWeight: 700, fontSize: 11 }}>
-                {lvInfo.badge}
-              </div>
-            </div>
+            ))}
+          </div>
 
-            <div style={{ fontSize: 18, fontWeight: 700, color: C.text, marginBottom: 16 }}>
-              {lang === 'ID' ? ls.meaningID : ls.meaningEN}
-            </div>
-
-            <div style={{ background: C.bg, borderRadius: C.radius, padding: '16px 18px' }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: C.textLight, letterSpacing: 1.5, marginBottom: 10 }}>
-                {t('CONTOH KALIMAT', 'EXAMPLE SENTENCE')}
-              </div>
-              <div style={{ fontSize: 15, color: C.text, fontStyle: 'italic', lineHeight: 1.6, marginBottom: 8 }}>
-                "{ls.sentenceEN}"
-              </div>
-              <div style={{ fontSize: 13, color: C.textMuted }}>
-                "{ls.sentenceID}"
-              </div>
-            </div>
-          </Card>
-
-          {/* Listen button */}
           <button
-            onClick={() => { speak(ls.word + '. ' + ls.sentenceEN); setSpeaking(true); setTimeout(() => setSpeaking(false), 2500) }}
-            style={{
-              width: '100%', padding: '14px 20px', borderRadius: C.radius,
-              background: speaking ? C.primaryLight : C.surface,
-              border: `1.5px solid ${speaking ? C.primary : C.border}`,
-              color: speaking ? C.primary : C.textMuted,
-              fontWeight: 600, fontSize: 14, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-              marginBottom: 20, transition: 'all 0.2s',
-            }}>
-            <span style={{ fontSize: 18 }}>{speaking ? '🔊' : '▶'}</span>
-            {speaking ? t('Memainkan...', 'Playing...') : t('Dengarkan Pengucapan', 'Hear Pronunciation')}
+            onClick={() => setScreen('register')}
+            style={{ width: '100%', background: C.accent, color: '#fff', border: 'none', borderRadius: 16, padding: '18px', fontSize: 17, fontWeight: 700, fontFamily: PJ, cursor: 'pointer', boxShadow: `0 0 40px ${C.accentGlow}` }}>
+            {t('Claim My Plan →', 'Ambil Rencanaku →')}
           </button>
-
-          <PrimaryBtn onClick={() => setLessonStep(1)}>
-            {t('Lanjut ke Quiz →', 'Continue to Quiz →')}
-          </PrimaryBtn>
-        </Wrap>
-      </PageWrap>
+        </div>
+      </Shell>
     )
+  }
 
-    // Step 1: Quiz
-    if (lessonStep === 1) {
-      const answered = quizAnswer !== null
-      const correct = quizAnswer === ls.ans
-      return (
-        <PageWrap>
-          <LangToggle lang={lang} onToggle={toggleLang} />
-          <Wrap>
-            <ProgressBar step={2} total={3} />
+  /* ═══════════════════════════════════════════════════════════════════════════
+     REGISTER
+  ═══════════════════════════════════════════════════════════════════════════ */
+  if (screen === 'register') return (
+    <Shell lang={lang} setLang={setLang}>
+      <div style={{ padding: '60px 24px 40px', maxWidth: 420, margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: 40 }}>
+          <h1 style={{ fontFamily: FR, fontSize: 32, fontWeight: 900, color: C.text, marginBottom: 12 }}>
+            {t('Lock In Your Spot', 'Simpan Posisimu')}
+          </h1>
+          <p style={{ fontFamily: PJ, fontSize: 15, color: C.textSec, lineHeight: 1.6 }}>
+            {t('Your plan is reserved for 24 hours. Enter your details to start.', 'Rencanamu disimpan 24 jam. Masukkan detailmu untuk memulai.')}
+          </p>
+        </div>
 
-            <h2 style={{ fontSize: 22, fontWeight: 800, color: C.text, marginBottom: 6 }}>
-              {t('Quiz Cepat', 'Quick Quiz')}
+        <form onSubmit={submitReg} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {[
+            { label: t('Full Name', 'Nama Lengkap'), type: 'text', val: regName, set: setRegName, ph: t('e.g. Budi Santoso', 'mis. Budi Santoso') },
+            { label: t('WhatsApp Number', 'Nomor WhatsApp'), type: 'tel', val: regPhone, set: setRegPhone, ph: '08xx xxxx xxxx' },
+          ].map(f => (
+            <div key={f.label}>
+              <label style={{ fontFamily: PJ, fontSize: 13, fontWeight: 600, color: C.textSec, display: 'block', marginBottom: 8 }}>{f.label}</label>
+              <input
+                required type={f.type} value={f.val} placeholder={f.ph}
+                onChange={e => f.set(e.target.value)}
+                style={{ width: '100%', background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: '14px 16px', fontSize: 16, color: C.text, fontFamily: PJ, outline: 'none', boxSizing: 'border-box' }}
+              />
+            </div>
+          ))}
+          <button
+            type="submit"
+            style={{ background: C.accent, color: '#fff', border: 'none', borderRadius: 16, padding: '18px', fontSize: 17, fontWeight: 700, fontFamily: PJ, cursor: 'pointer', marginTop: 8, boxShadow: `0 0 40px ${C.accentGlow}` }}>
+            {t('Start Learning Free →', 'Mulai Belajar Gratis →')}
+          </button>
+        </form>
+
+        <p style={{ fontFamily: PJ, fontSize: 12, color: C.textMuted, textAlign: 'center', marginTop: 16 }}>
+          {t('No spam. No payment. Just English.', 'Tidak ada spam. Tidak ada bayaran. Hanya Bahasa Inggris.')}
+        </p>
+      </div>
+    </Shell>
+  )
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     DASHBOARD
+  ═══════════════════════════════════════════════════════════════════════════ */
+  if (screen === 'dashboard') {
+    const week       = Math.min(Math.ceil(day / 7), 26)
+    const currWeek   = CURRICULUM_WEEKS.find(c => c.week === week) || CURRICULUM_WEEKS[0]
+    const todayDone  = completedDays.includes(day)
+    const totalDays  = 180
+    const overallPct = Math.round((completedDays.length / totalDays) * 100)
+    const firstName  = profile?.name?.split(' ')[0] || t('Learner', 'Pelajar')
+
+    return (
+      <Shell lang={lang} setLang={setLang}>
+        <div style={{ padding: '28px 20px 80px', maxWidth: 420, margin: '0 auto' }}>
+          {/* Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+            <div>
+              <p style={{ fontFamily: PJ, fontSize: 13, color: C.textMuted, marginBottom: 3 }}>{t('Good morning,', 'Selamat pagi,')}</p>
+              <h1 style={{ fontFamily: FR, fontSize: 30, fontWeight: 800, color: C.text }}>{firstName} 👋</h1>
+            </div>
+            <div style={{ background: C.elevated, border: `1px solid ${C.border}`, borderRadius: 14, padding: '12px 16px', textAlign: 'center', minWidth: 64 }}>
+              <div style={{ fontSize: 22 }}>🔥</div>
+              <div style={{ fontFamily: FR, fontSize: 20, fontWeight: 800, color: C.gold, lineHeight: 1 }}>{streak}</div>
+              <div style={{ fontFamily: PJ, fontSize: 10, color: C.textMuted, marginTop: 2 }}>{t('streak', 'berturut')}</div>
+            </div>
+          </div>
+
+          {/* XP + Overall progress */}
+          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: '16px 20px', marginBottom: 18 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <span style={{ fontFamily: PJ, fontSize: 13, fontWeight: 600, color: C.textSec }}>{t('Overall Progress', 'Progres Keseluruhan')}</span>
+              <span style={{ fontFamily: FR, fontSize: 16, fontWeight: 800, color: C.gold }}>⚡ {xp.toLocaleString()} XP</span>
+            </div>
+            <div style={{ background: C.elevated, borderRadius: 6, height: 6, overflow: 'hidden' }}>
+              <div style={{ width: `${Math.max(overallPct, 0)}%`, height: '100%', background: `linear-gradient(90deg, ${C.accent}, ${C.accentHov})`, borderRadius: 6, transition: 'width 0.8s cubic-bezier(0.34,1.56,0.64,1)', minWidth: overallPct > 0 ? 8 : 0 }} />
+            </div>
+            <div style={{ fontFamily: PJ, fontSize: 11, color: C.textMuted, marginTop: 6 }}>
+              {t(`Day ${day} of ${totalDays} · Week ${week} of 26`, `Hari ${day} dari ${totalDays} · Minggu ${week} dari 26`)}
+            </div>
+          </div>
+
+          {/* Today's lesson */}
+          <div style={{ background: `linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(99,102,241,0.04) 100%)`, border: `1px solid ${C.accentBorder}`, borderRadius: 22, padding: 24, marginBottom: 18 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <p style={{ fontFamily: PJ, fontSize: 11, fontWeight: 700, color: C.accent, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                {t(`Week ${week} · Day ${day}`, `Minggu ${week} · Hari ${day}`)}
+              </p>
+              {todayDone && <span style={{ fontFamily: PJ, fontSize: 12, color: C.success, fontWeight: 700 }}>✓ {t('Done', 'Selesai')}</span>}
+            </div>
+            <h2 style={{ fontFamily: FR, fontSize: 22, fontWeight: 800, color: C.text, marginBottom: 6 }}>
+              {t(currWeek?.themeEN, currWeek?.themeID)}
             </h2>
-            <p style={{ color: C.textMuted, fontSize: 14, lineHeight: 1.6, marginBottom: 20 }}>
-              {lang === 'ID' ? ls.quizQID : ls.quizQEN}
+            <p style={{ fontFamily: PJ, fontSize: 13, color: C.textSec, marginBottom: 20, lineHeight: 1.55 }}>
+              {t(currWeek?.descEN, currWeek?.descID)}
             </p>
 
-            {ls.quizSentence && (
-              <Card style={{ padding: '16px 20px', marginBottom: 20, background: C.bg }}>
-                <div style={{ fontSize: 17, color: C.text, fontStyle: 'italic', textAlign: 'center', fontWeight: 500 }}>
-                  {ls.quizSentence}
+            {/* Activity icons */}
+            <div style={{ display: 'flex', gap: 6, marginBottom: 20 }}>
+              {[
+                { icon: '📖', label: t('Vocab', 'Kosakata') },
+                { icon: '📝', label: t('Grammar', 'Grammar') },
+                { icon: '📄', label: t('Reading', 'Baca') },
+                { icon: '❓', label: t('Quiz', 'Kuis') },
+                { icon: '🎙️', label: t('Speaking', 'Bicara') },
+              ].map((a, i) => (
+                <div key={i} style={{ flex: 1, background: C.card, borderRadius: 10, padding: '8px 4px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 14 }}>{a.icon}</div>
+                  <div style={{ fontFamily: PJ, fontSize: 9, color: C.textMuted, marginTop: 3 }}>{a.label}</div>
                 </div>
-              </Card>
-            )}
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
-              {ls.opts.map((opt, i) => {
-                let bg = C.surface, border = C.border, color = C.text
-                let iconEl = null
-                if (answered) {
-                  if (i === ls.ans) {
-                    bg = C.successBg; border = '#059669'; color = C.success
-                    iconEl = <span style={{ marginLeft: 'auto', fontSize: 16 }}>✓</span>
-                  } else if (i === quizAnswer) {
-                    bg = C.errorBg; border = '#DC2626'; color = C.error
-                    iconEl = <span style={{ marginLeft: 'auto', fontSize: 16 }}>✗</span>
-                  }
-                }
-                return (
-                  <button key={i} disabled={answered}
-                    onClick={() => { setQuizAnswer(i); if (i === ls.ans) setXP(p => p + 50) }}
-                    style={{
-                      display: 'flex', alignItems: 'center',
-                      padding: '15px 18px', borderRadius: C.radius,
-                      background: bg, border: `1.5px solid ${border}`, color,
-                      fontWeight: 600, fontSize: 14, cursor: answered ? 'default' : 'pointer',
-                      textAlign: 'left', transition: 'all 0.2s',
-                      boxShadow: answered ? 'none' : C.shadowSm,
-                    }}>
-                    <span style={{ flex: 1 }}>{lang === 'ID' ? opt.ID : opt.EN}</span>
-                    {iconEl}
-                  </button>
-                )
-              })}
+              ))}
             </div>
 
-            {answered && (
-              <>
-                <Card style={{
-                  padding: '16px 18px', marginBottom: 18,
-                  background: correct ? C.successBg : C.errorBg,
-                  borderColor: correct ? '#059669' : '#DC2626',
-                }}>
-                  <div style={{ fontWeight: 700, fontSize: 15, color: correct ? C.success : C.error, marginBottom: correct ? 0 : 6 }}>
-                    {correct ? t('✓ Benar! +50 XP', '✓ Correct! +50 XP') : t('✗ Belum tepat', '✗ Not quite right')}
+            <button
+              onClick={startLesson}
+              style={{ width: '100%', background: todayDone ? C.elevated : C.accent, color: todayDone ? C.textSec : '#fff', border: 'none', borderRadius: 14, padding: '16px', fontSize: 16, fontWeight: 700, fontFamily: PJ, cursor: 'pointer', boxShadow: todayDone ? 'none' : `0 0 28px ${C.accentGlow}`, transition: 'all 0.2s' }}>
+              {todayDone ? t('Review Again', 'Ulang Lagi') : t("Start Today's Lesson →", 'Mulai Pelajaran Hari Ini →')}
+            </button>
+          </div>
+
+          {/* Journey map */}
+          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, padding: 20 }}>
+            <h3 style={{ fontFamily: PJ, fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 14 }}>
+              {t('Your Journey', 'Perjalananmu')}
+            </h3>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+              {Array.from({ length: Math.min(day + 6, 30) }, (_, i) => {
+                const d = i + 1
+                const done    = completedDays.includes(d)
+                const current = d === day
+                return (
+                  <div key={d} style={{ width: 36, height: 36, borderRadius: 10, background: done ? C.success : current ? C.accent : C.elevated, border: current ? `2px solid ${C.accentHov}` : '2px solid transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: PJ, fontSize: 11, fontWeight: 700, color: (done || current) ? '#fff' : C.textMuted }}>
+                    {done ? '✓' : d}
                   </div>
-                  {!correct && (
-                    <div style={{ color: C.textMuted, fontSize: 13 }}>
-                      {t('Jawaban benar: ', 'Answer: ')}
-                      <strong style={{ color: C.text }}>{lang === 'ID' ? ls.opts[ls.ans].ID : ls.opts[ls.ans].EN}</strong>
-                    </div>
-                  )}
-                </Card>
-                <PrimaryBtn onClick={() => setLessonStep(2)}>{t('Lanjut →', 'Continue →')}</PrimaryBtn>
-              </>
-            )}
-          </Wrap>
-        </PageWrap>
+                )
+              })}
+              {day + 6 < 30 && (
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: C.elevated, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: C.textMuted }}>…</div>
+              )}
+            </div>
+          </div>
+
+          {/* Reset */}
+          <div style={{ textAlign: 'center', marginTop: 24 }}>
+            <button onClick={() => { localStorage.clear(); window.location.reload() }}
+              style={{ background: 'none', border: 'none', fontFamily: PJ, fontSize: 11, color: C.textMuted, cursor: 'pointer' }}>
+              {t('Reset progress', 'Reset progres')}
+            </button>
+          </div>
+        </div>
+      </Shell>
+    )
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     LESSON
+  ═══════════════════════════════════════════════════════════════════════════ */
+  if (screen === 'lesson' && lessonData) {
+    const ACT_ICONS  = ['📖', '📝', '📄', '❓', '🎙️']
+    const ACT_LABELS = [t('Vocabulary', 'Kosakata'), t('Grammar', 'Tata Bahasa'), t('Reading', 'Membaca'), t('Quiz', 'Kuis'), t('Speaking', 'Berbicara')]
+
+    /* ── Vocab ─────────────────────────────────────────────────────────────── */
+    function renderVocab() {
+      const card = lessonData.vocabCards[cardIdx]
+      if (!card) return (
+        <CenteredCompletion icon="✅" msg={t('All vocab cards done!', 'Semua kartu kosakata selesai!')}
+          btnLabel={t('Next Activity →', 'Aktivitas Berikutnya →')}
+          onNext={() => { awardXp(25); nextAct() }} />
+      )
+      return (
+        <div>
+          <p style={{ fontFamily: PJ, fontSize: 12, color: C.textMuted, textAlign: 'center', marginBottom: 20 }}>
+            {t(`Card ${cardIdx + 1} of ${lessonData.vocabCards.length}`, `Kartu ${cardIdx + 1} dari ${lessonData.vocabCards.length}`)}
+          </p>
+
+          {/* 3D Flip Card */}
+          <div style={{ perspective: '1000px', marginBottom: 22, cursor: 'pointer' }} onClick={() => setFlipped(f => !f)}>
+            <div style={{ position: 'relative', height: 240, transformStyle: 'preserve-3d', transition: 'transform 0.55s cubic-bezier(0.4,0,0.2,1)', transform: flipped ? 'rotateY(180deg)' : 'rotateY(0)' }}>
+              {/* Front */}
+              <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 28 }}>
+                <div style={{ fontFamily: FR, fontSize: 38, fontWeight: 900, color: C.text, marginBottom: 10, letterSpacing: '0.04em' }}>{card.word}</div>
+                <div style={{ fontFamily: PJ, fontSize: 16, color: C.textMuted }}>{card.phonetic}</div>
+                <p style={{ fontFamily: PJ, fontSize: 12, color: C.textMuted, marginTop: 28 }}>{t('Tap to reveal meaning', 'Ketuk untuk lihat arti')}</p>
+                <button onClick={e => { e.stopPropagation(); speak(card.word) }}
+                  style={{ position: 'absolute', top: 16, right: 16, background: C.elevated, border: `1px solid ${C.border}`, borderRadius: 10, padding: '8px 10px', fontSize: 18, cursor: 'pointer', lineHeight: 1 }}>
+                  🔊
+                </button>
+              </div>
+              {/* Back */}
+              <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', transform: 'rotateY(180deg)', background: C.elevated, border: `1px solid ${C.accentBorder}`, borderRadius: 20, padding: 24, overflow: 'auto' }}>
+                <p style={{ fontFamily: PJ, fontSize: 11, fontWeight: 700, color: C.accent, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{t('MEANING', 'ARTI')}</p>
+                <p style={{ fontFamily: PJ, fontSize: 15, color: C.text, marginBottom: 4 }}>{card.meaningEN}</p>
+                <p style={{ fontFamily: PJ, fontSize: 14, color: C.textSec, marginBottom: 18 }}>{card.meaningID}</p>
+                <div style={{ borderLeft: `3px solid ${C.accent}`, paddingLeft: 14 }}>
+                  <p style={{ fontFamily: PJ, fontSize: 13, color: C.textSec, fontStyle: 'italic', lineHeight: 1.5 }}>
+                    "{t(card.sentenceEN, card.sentenceID)}"
+                  </p>
+                </div>
+                {card.tipEN && (
+                  <div style={{ background: C.card, borderRadius: 10, padding: '10px 14px', marginTop: 14 }}>
+                    <p style={{ fontFamily: PJ, fontSize: 12, color: C.textMuted }}>💡 {t(card.tipEN, card.tipID)}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {!flipped ? (
+            <button onClick={() => { speak(card.word); setFlipped(true) }}
+              style={{ width: '100%', background: C.accent, color: '#fff', border: 'none', borderRadius: 14, padding: '15px', fontSize: 15, fontWeight: 700, fontFamily: PJ, cursor: 'pointer', boxShadow: `0 0 24px ${C.accentGlow}` }}>
+              {t('Reveal Meaning', 'Lihat Artinya')}
+            </button>
+          ) : (
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => {
+                  setFlipped(false)
+                  if (cardIdx + 1 >= lessonData.vocabCards.length) { awardXp(25); nextAct() }
+                  else setCardIdx(c => c + 1)
+                }}
+                style={{ flex: 2, background: C.success, color: '#fff', border: 'none', borderRadius: 14, padding: '15px', fontSize: 15, fontWeight: 700, fontFamily: PJ, cursor: 'pointer' }}>
+                {cardIdx + 1 >= lessonData.vocabCards.length ? t('Finish →', 'Selesai →') : t('Got it! →', 'Paham! →')}
+              </button>
+              <button onClick={() => setFlipped(false)}
+                style={{ flex: 1, background: C.elevated, color: C.textSec, border: `1px solid ${C.border}`, borderRadius: 14, padding: '15px', fontSize: 14, fontFamily: PJ, cursor: 'pointer', fontWeight: 600 }}>
+                {t('Review', 'Ulangi')}
+              </button>
+            </div>
+          )}
+        </div>
       )
     }
 
-    // Step 2: Real-world tip
-    return (
-      <PageWrap>
-        <LangToggle lang={lang} onToggle={toggleLang} />
-        <Wrap>
-          <ProgressBar step={3} total={3} />
+    /* ── Grammar ───────────────────────────────────────────────────────────── */
+    function renderGrammar() {
+      const g = lessonData.grammar
+      if (!g) return <CenteredCompletion icon="📝" msg={t('No grammar today!', 'Tidak ada grammar hari ini!')} btnLabel={t('Next →', 'Lanjut →')} onNext={() => { awardXp(30); nextAct() }} />
 
-          <h2 style={{ fontSize: 22, fontWeight: 800, color: C.text, marginBottom: 6 }}>
-            {t('Konteks Dunia Nyata', 'Real-World Context')}
-          </h2>
-          <p style={{ color: C.textMuted, fontSize: 14, marginBottom: 24 }}>
-            {t('Khusus untuk konteks profesional di Batam', 'Specifically for the Batam professional context')}
-          </p>
-
-          <Card style={{ padding: '24px', marginBottom: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: C.primaryLight, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>🇮🇩</div>
-              <span style={{ fontSize: 16, color: C.textMuted, fontWeight: 400 }}>→</span>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>🇸🇬</div>
-              <span style={{ fontWeight: 700, fontSize: 14, color: C.primary, marginLeft: 8 }}>Batam Context</span>
-            </div>
-            <p style={{ color: C.text, fontSize: 16, lineHeight: 1.75, fontWeight: 400 }}>
-              {lang === 'ID' ? ls.tipID : ls.tipEN}
-            </p>
-          </Card>
-
-          <Card style={{ padding: '18px 20px', marginBottom: 28, background: C.goldBg, borderColor: '#D97706' }}>
-            <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-              <span style={{ fontSize: 22, flexShrink: 0 }}>🎯</span>
-              <div>
-                <div style={{ fontWeight: 700, fontSize: 14, color: C.gold, marginBottom: 4 }}>
-                  {t('Tantangan Hari Ini', "Today's Challenge")}
-                </div>
-                <div style={{ fontSize: 14, color: '#92400E', lineHeight: 1.6 }}>
-                  {t(`Gunakan kata "${ls.word}" dalam satu percakapan hari ini`, `Use the word "${ls.word}" in one conversation today`)}
-                </div>
+      // Grammar intro (qIdx === 0)
+      if (qIdx === 0) {
+        return (
+          <div>
+            <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, padding: 24, marginBottom: 18 }}>
+              <p style={{ fontFamily: PJ, fontSize: 11, fontWeight: 700, color: C.accent, letterSpacing: '0.1em', marginBottom: 10, textTransform: 'uppercase' }}>{t("TODAY'S GRAMMAR", 'TATA BAHASA HARI INI')}</p>
+              <h3 style={{ fontFamily: FR, fontSize: 24, fontWeight: 800, color: C.text, marginBottom: 18 }}>{t(g.titleEN, g.titleID)}</h3>
+              <div style={{ background: C.elevated, borderRadius: 12, padding: '12px 16px', marginBottom: 16 }}>
+                <p style={{ fontFamily: PJ, fontSize: 11, fontWeight: 700, color: C.textMuted, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{t('STRUCTURE', 'STRUKTUR')}</p>
+                <p style={{ fontFamily: 'monospace', fontSize: 14, color: C.accent }}>{t(g.structureEN, g.structureID)}</p>
               </div>
-            </div>
-          </Card>
-
-          <PrimaryBtn onClick={() => setScreen('lesson-done')}>
-            {t('Selesaikan Pelajaran →', 'Complete Lesson →')}
-          </PrimaryBtn>
-        </Wrap>
-      </PageWrap>
-    )
-  }
-
-  function LessonDone() {
-    return (
-      <PageWrap>
-        <LangToggle lang={lang} onToggle={toggleLang} />
-        <Wrap>
-          {/* Completion header */}
-          <div style={{ textAlign: 'center', marginBottom: 32, paddingTop: 16 }}>
-            <div style={{ width: 72, height: 72, borderRadius: '50%', background: C.successBg, border: `2px solid #059669`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 32 }}>
-              ✓
-            </div>
-            <h1 style={{ fontSize: 26, fontWeight: 800, color: C.text, marginBottom: 6 }}>
-              {t('Pelajaran 1 Selesai!', 'Lesson 1 Complete!')}
-            </h1>
-            <p style={{ color: C.textMuted, fontSize: 15 }}>
-              {t('Kerja bagus. Kamu sudah memulai perjalananmu.', "Well done. You've started your journey.")}
-            </p>
-          </div>
-
-          {/* Stats */}
-          <div style={{ display: 'flex', gap: 12, marginBottom: 28 }}>
-            {[
-              { icon: '⚡', label: 'XP', val: '+50', color: C.gold, bg: C.goldBg },
-              { icon: '🔥', label: t('Streak', 'Streak'), val: `${t('Hari', 'Day')} 1`, color: '#EA580C', bg: '#FFF7ED' },
-              { icon: '📚', label: t('Kata', 'Words'), val: '1', color: C.primary, bg: C.primaryLight },
-            ].map((s, i) => (
-              <Card key={i} style={{ flex: 1, padding: '16px 8px', textAlign: 'center', background: s.bg, borderColor: 'transparent' }}>
-                <div style={{ fontSize: 20, marginBottom: 6 }}>{s.icon}</div>
-                <div style={{ fontWeight: 800, fontSize: 18, color: s.color }}>{s.val}</div>
-                <div style={{ fontSize: 11, color: C.textMuted, fontWeight: 600, marginTop: 2 }}>{s.label}</div>
-              </Card>
-            ))}
-          </div>
-
-          {/* Next lesson locked */}
-          <Card style={{ marginBottom: 24, overflow: 'hidden', position: 'relative' }}>
-            <div style={{ padding: '18px 20px', filter: 'blur(3px)', userSelect: 'none' }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: C.textLight, letterSpacing: 1, marginBottom: 6 }}>
-                {t('PELAJARAN 2', 'LESSON 2')}
-              </div>
-              <div style={{ fontWeight: 700, fontSize: 17, color: C.text }}>DELEGATE</div>
-              <div style={{ fontSize: 14, color: C.textMuted }}>
-                {t('Mendelegasikan tugas secara efektif', 'Delegating tasks effectively')}
-              </div>
-            </div>
-            <div style={{
-              position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.75)',
-              backdropFilter: 'blur(2px)', display: 'flex', flexDirection: 'column',
-              alignItems: 'center', justifyContent: 'center', gap: 6,
-            }}>
-              <div style={{ fontSize: 24, color: C.textMuted }}>🔒</div>
-              <div style={{ fontWeight: 700, fontSize: 14, color: C.text }}>
-                {t('Simpan progress untuk membuka', 'Save progress to unlock')}
-              </div>
-            </div>
-          </Card>
-
-          <PrimaryBtn onClick={() => setScreen('register')} style={{ marginBottom: 10 }}>
-            {t('💾  Simpan Progress dengan WhatsApp', '💾  Save Progress with WhatsApp')}
-          </PrimaryBtn>
-          <p style={{ textAlign: 'center', color: C.textLight, fontSize: 13 }}>
-            {t('Gratis. Tidak perlu password.', 'Free. No password needed.')}
-          </p>
-        </Wrap>
-      </PageWrap>
-    )
-  }
-
-  function Register() {
-    return (
-      <PageWrap>
-        <LangToggle lang={lang} onToggle={toggleLang} />
-        <Wrap>
-          <div style={{ textAlign: 'center', marginBottom: 28 }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>📱</div>
-            <h1 style={{ fontSize: 24, fontWeight: 800, color: C.text, marginBottom: 8 }}>
-              {t('Simpan Progressmu', 'Save Your Progress')}
-            </h1>
-            <p style={{ color: C.textMuted, fontSize: 15, lineHeight: 1.7 }}>
-              {t('Masukkan nomor WhatsApp untuk menyimpan streak dan membuka pelajaran berikutnya.', 'Enter your WhatsApp number to save your streak and unlock the next lesson.')}
-            </p>
-          </div>
-
-          {/* Progress recap */}
-          <Card style={{ padding: '16px 20px', marginBottom: 24 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-around' }}>
-              {[
-                { val: '1', label: t('Pelajaran', 'Lesson') },
-                { val: '50 XP', label: t('Poin diperoleh', 'Points earned') },
-                { val: '🔥 1', label: t('Hari streak', 'Day streak') },
-              ].map((s, i) => (
-                <div key={i} style={{ textAlign: 'center' }}>
-                  <div style={{ fontWeight: 800, fontSize: 18, color: C.primary }}>{s.val}</div>
-                  <div style={{ fontSize: 12, color: C.textMuted, marginTop: 2 }}>{s.label}</div>
+              <p style={{ fontFamily: PJ, fontSize: 14, color: C.textSec, lineHeight: 1.7, marginBottom: 16 }}>{t(g.ruleEN, g.ruleID)}</p>
+              {g.examplesEN?.slice(0, 2).map((ex, i) => (
+                <div key={i} style={{ borderLeft: `3px solid ${C.accent}`, paddingLeft: 14, marginBottom: 10 }}>
+                  <p style={{ fontFamily: PJ, fontSize: 14, color: C.text, fontStyle: 'italic' }}>"{t(ex, g.examplesID?.[i])}"</p>
                 </div>
               ))}
             </div>
-          </Card>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 20 }}>
-            <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: C.textMuted, marginBottom: 8 }}>
-                {t('Nama (opsional)', 'Name (optional)')}
-              </label>
-              <input value={name} onChange={e => setName(e.target.value)}
-                placeholder={t('Nama kamu...', 'Your name...')}
-                style={{ width: '100%', padding: '13px 16px', borderRadius: C.radius, fontSize: 15, background: C.surface, border: `1.5px solid ${C.border}`, color: C.text, outline: 'none' }}
-              />
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: C.textMuted, marginBottom: 8 }}>
-                {t('Nomor WhatsApp *', 'WhatsApp Number *')}
-              </label>
-              <div style={{ display: 'flex', gap: 10 }}>
-                <div style={{ padding: '13px 14px', borderRadius: C.radius, background: C.bg, border: `1.5px solid ${C.border}`, fontWeight: 700, fontSize: 14, color: C.text, whiteSpace: 'nowrap' }}>
-                  🇮🇩 +62
-                </div>
-                <input value={phone} onChange={e => setPhone(e.target.value)}
-                  placeholder="8123456789" type="tel"
-                  style={{ flex: 1, padding: '13px 16px', borderRadius: C.radius, fontSize: 15, background: C.surface, border: `1.5px solid ${C.border}`, color: C.text, outline: 'none' }}
-                />
-              </div>
-            </div>
-
-            {refFrom ? (
-              <Card style={{ padding: '12px 16px', background: C.goldBg, borderColor: '#D97706' }}>
-                <span style={{ fontSize: 14, color: C.gold, fontWeight: 600 }}>
-                  ✓ {t('Kode referral:', 'Referral code:')} <strong>{refFrom}</strong>
-                </span>
-              </Card>
-            ) : (
-              <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: C.textMuted, marginBottom: 8 }}>
-                  {t('Kode referral (opsional)', 'Referral code (optional)')}
-                </label>
-                <input value={refFrom} onChange={e => setRefFrom(e.target.value.toUpperCase())}
-                  placeholder="FLNT-XXXX"
-                  style={{ width: '100%', padding: '13px 16px', borderRadius: C.radius, fontSize: 15, background: C.surface, border: `1.5px solid ${C.border}`, color: C.text, outline: 'none', letterSpacing: 1 }}
-                />
-              </div>
-            )}
-          </div>
-
-          {submitError && (
-            <Card style={{ padding: '12px 16px', marginBottom: 16, background: C.errorBg, borderColor: '#DC2626' }}>
-              <span style={{ color: C.error, fontSize: 14 }}>{submitError}</span>
-            </Card>
-          )}
-
-          <PrimaryBtn onClick={handleRegister} disabled={submitting} style={{ marginBottom: 12 }}>
-            {submitting ? t('Menyimpan...', 'Saving...') : t('✓  Simpan & Lanjutkan', '✓  Save & Continue')}
-          </PrimaryBtn>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
-            <span style={{ fontSize: 14, color: C.textLight }}>🔒</span>
-            <p style={{ fontSize: 13, color: C.textLight }}>
-              {t('Data kamu aman dan tidak akan dibagikan', 'Your data is safe and never shared')}
-            </p>
-          </div>
-        </Wrap>
-      </PageWrap>
-    )
-  }
-
-  function Success() {
-    return (
-      <PageWrap>
-        <LangToggle lang={lang} onToggle={toggleLang} />
-        <Wrap>
-          <div style={{ textAlign: 'center', marginBottom: 28, paddingTop: 16 }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>🎊</div>
-            <h1 style={{ fontSize: 26, fontWeight: 800, color: C.text, marginBottom: 8 }}>
-              {t('Kamu sudah terdaftar!', "You're registered!")}
-            </h1>
-            <p style={{ color: C.textMuted, fontSize: 15, lineHeight: 1.7 }}>
-              {t('Progressmu tersimpan. Undang teman dan buka konten eksklusif.', 'Your progress is saved. Invite friends to unlock exclusive content.')}
-            </p>
-          </div>
-
-          {/* Referral code */}
-          <Card style={{ padding: '24px', marginBottom: 20, textAlign: 'center', background: C.goldBg, borderColor: '#D97706' }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: C.gold, letterSpacing: 2, marginBottom: 12 }}>
-              {t('KODE REFERRALMU', 'YOUR REFERRAL CODE')}
-            </div>
-            <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: 4, color: C.text, marginBottom: 14 }}>
-              {refCode}
-            </div>
-            <button onClick={() => copyCode(refCode)}
-              style={{ padding: '9px 20px', borderRadius: C.radiusSm, background: C.surface, border: `1.5px solid ${C.border}`, color: C.gold, fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
-              {copied ? t('✓ Disalin!', '✓ Copied!') : t('📋  Salin Kode', '📋  Copy Code')}
+            <button onClick={() => setQIdx(1)}
+              style={{ width: '100%', background: C.accent, color: '#fff', border: 'none', borderRadius: 14, padding: '16px', fontSize: 16, fontWeight: 700, fontFamily: PJ, cursor: 'pointer', boxShadow: `0 0 28px ${C.accentGlow}` }}>
+              {t('Practice Now →', 'Latihan Sekarang →')}
             </button>
-          </Card>
-
-          {/* Reward tiers */}
-          <div style={{ marginBottom: 24 }}>
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: C.textMuted, letterSpacing: 1, marginBottom: 12 }}>
-              {t('REWARD REFERRAL', 'REFERRAL REWARDS')}
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {[
-                { n: 1, icon: '🎁', reward: { ID: 'Business English Pack — 20 pelajaran eksklusif', EN: 'Business English Pack — 20 exclusive lessons' } },
-                { n: 3, icon: '🎤', reward: { ID: 'Speaking Pro — latihan berbicara tak terbatas', EN: 'Speaking Pro — unlimited speaking practice' } },
-                { n: 5, icon: '⭐', reward: { ID: '1 bulan FluentEdge Pro gratis', EN: '1 month FluentEdge Pro free' } },
-              ].map((r, i) => (
-                <Card key={i} style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
-                  <span style={{ fontSize: 22, flexShrink: 0 }}>{r.icon}</span>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 13, color: C.primary }}>
-                      {t(`Undang ${r.n} teman`, `Invite ${r.n} friend${r.n > 1 ? 's' : ''}`)}
-                    </div>
-                    <div style={{ fontSize: 13, color: C.textMuted }}>{r.reward[lang]}</div>
-                  </div>
-                </Card>
-              ))}
-            </div>
           </div>
+        )
+      }
 
-          <a href={waLink(refCode)} target="_blank" rel="noopener noreferrer"
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-              padding: '16px', borderRadius: C.radius,
-              background: '#25D366', color: '#fff', fontWeight: 700, fontSize: 16,
-              marginBottom: 12, boxShadow: '0 2px 8px rgba(37,211,102,0.3)',
-            }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-            {t('Bagikan ke WhatsApp', 'Share to WhatsApp')}
-          </a>
-          <button onClick={() => setScreen('dashboard')}
-            style={{ width: '100%', padding: '12px', background: 'none', border: 'none', color: C.textMuted, fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
-            {t('Lanjut ke Dashboard →', 'Continue to Dashboard →')}
-          </button>
-        </Wrap>
-      </PageWrap>
-    )
-  }
+      const exercises = g.exercises || []
+      const exIdx = qIdx - 1
 
-  function Dashboard() {
-    const lvInfo = LEVELS.find(l => l.id === level) || LEVELS[1]
-    return (
-      <PageWrap>
-        <LangToggle lang={lang} onToggle={toggleLang} />
+      if (exIdx >= Math.min(exercises.length, 3)) {
+        return <CenteredCompletion icon="✅" msg={t('Grammar exercises done!', 'Latihan grammar selesai!')} btnLabel={t('Next Activity →', 'Aktivitas Berikutnya →')} onNext={() => { awardXp(30); nextAct() }} />
+      }
 
-        {/* Top bar */}
-        <div style={{ background: C.surface, borderBottom: `1px solid ${C.border}`, padding: '16px 20px', position: 'sticky', top: 0, zIndex: 100 }}>
-          <div style={{ maxWidth: 520, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 28, height: 28, borderRadius: 7, background: C.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>📘</div>
-              <span style={{ fontWeight: 800, fontSize: 16, color: C.primary }}>FluentEdge</span>
+      const ex   = exercises[exIdx]
+      const opts = lang === 'en' ? ex.optionsEN : (ex.optionsID || ex.optionsEN)
+      return (
+        <MCQQuestion
+          progress={t(`Exercise ${exIdx + 1}/${Math.min(exercises.length, 3)}`, `Latihan ${exIdx + 1}/${Math.min(exercises.length, 3)}`)}
+          question={t(ex.questionEN, ex.questionID)}
+          options={opts} answer={ex.answer}
+          selected={selected} feedback={feedback} lang={lang}
+          onSelect={opt => { setSelected(opt); setFeedback(opt === ex.answer ? 'correct' : 'wrong'); if (opt === ex.answer) awardXp(10) }}
+          onNext={() => { setSelected(null); setFeedback(null); setQIdx(q => q + 1) }}
+        />
+      )
+    }
+
+    /* ── Reading ───────────────────────────────────────────────────────────── */
+    function renderReading() {
+      const r = lessonData.reading
+      if (!r) return <CenteredCompletion icon="📄" msg={t('No reading today!', 'Tidak ada bacaan hari ini!')} btnLabel={t('Next →', 'Lanjut →')} onNext={() => { awardXp(30); nextAct() }} />
+
+      // Passage (qIdx === 0)
+      if (qIdx === 0) {
+        return (
+          <div>
+            <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, padding: 24, marginBottom: 18 }}>
+              <p style={{ fontFamily: PJ, fontSize: 11, fontWeight: 700, color: C.accent, letterSpacing: '0.1em', marginBottom: 10, textTransform: 'uppercase' }}>{t('READING PASSAGE', 'TEKS BACAAN')}</p>
+              <h3 style={{ fontFamily: FR, fontSize: 20, fontWeight: 800, color: C.text, marginBottom: 16 }}>{t(r.titleEN, r.titleID)}</h3>
+              <p style={{ fontFamily: PJ, fontSize: 14, color: C.textSec, lineHeight: 1.85, whiteSpace: 'pre-line' }}>{t(r.textEN, r.textID)}</p>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ padding: '4px 12px', borderRadius: 8, background: `${lvInfo.color}15`, border: `1px solid ${lvInfo.color}30`, color: lvInfo.color, fontWeight: 700, fontSize: 12 }}>
-                {lvInfo.badge}
-              </div>
-            </div>
+            <button onClick={() => setQIdx(1)}
+              style={{ width: '100%', background: C.accent, color: '#fff', border: 'none', borderRadius: 14, padding: '16px', fontSize: 16, fontWeight: 700, fontFamily: PJ, cursor: 'pointer', boxShadow: `0 0 28px ${C.accentGlow}` }}>
+              {t('Answer Questions →', 'Jawab Pertanyaan →')}
+            </button>
+          </div>
+        )
+      }
+
+      const questions = r.questionsEN || []
+      const qNum = qIdx - 1
+
+      if (qNum >= Math.min(questions.length, 3)) {
+        return <CenteredCompletion icon="✅" msg={t('Reading complete!', 'Bacaan selesai!')} btnLabel={t('Next Activity →', 'Aktivitas Berikutnya →')} onNext={() => { awardXp(30); nextAct() }} />
+      }
+
+      const q = questions[qNum]
+      const correctAnswer = q.options[q.ans] // ans is an index
+      return (
+        <MCQQuestion
+          progress={t(`Question ${qNum + 1}/${Math.min(questions.length, 3)}`, `Pertanyaan ${qNum + 1}/${Math.min(questions.length, 3)}`)}
+          question={q.q} options={q.options} answer={correctAnswer}
+          selected={selected} feedback={feedback} lang={lang}
+          onSelect={opt => { setSelected(opt); setFeedback(opt === correctAnswer ? 'correct' : 'wrong'); if (opt === correctAnswer) awardXp(10) }}
+          onNext={() => { setSelected(null); setFeedback(null); setQIdx(qi => qi + 1) }}
+        />
+      )
+    }
+
+    /* ── Quiz ──────────────────────────────────────────────────────────────── */
+    function renderQuiz() {
+      const questions = lessonData.quizQuestions
+
+      if (qIdx >= questions.length) {
+        return <CenteredCompletion icon="🏆" msg={t('Quiz complete!', 'Kuis selesai!')} btnLabel={t('Final Activity →', 'Aktivitas Terakhir →')} onNext={() => { awardXp(30); nextAct() }} />
+      }
+
+      const q = questions[qIdx]
+      return (
+        <MCQQuestion
+          progress={t(`Question ${qIdx + 1}/${questions.length}`, `Soal ${qIdx + 1}/${questions.length}`)}
+          question={t(`What does "${q.word}" mean?`, `Apa arti dari "${q.word}"?`)}
+          subtext={q.phonetic} options={q.options} answer={q.answer}
+          selected={selected} feedback={feedback} lang={lang}
+          onSelect={opt => { setSelected(opt); setFeedback(opt === q.answer ? 'correct' : 'wrong'); if (opt === q.answer) awardXp(10) }}
+          onNext={() => { setSelected(null); setFeedback(null); setQIdx(i => i + 1) }}
+        />
+      )
+    }
+
+    /* ── Speaking ──────────────────────────────────────────────────────────── */
+    function renderSpeaking() {
+      const entry   = lessonData.speakingEntry
+      const prompts = lang === 'en' ? (entry?.promptsEN || []) : (entry?.promptsID || entry?.promptsEN || [])
+
+      if (qIdx >= 2 || !prompts[qIdx]) {
+        return (
+          <div style={{ textAlign: 'center', padding: 32 }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>🎉</div>
+            <h3 style={{ fontFamily: FR, fontSize: 24, fontWeight: 800, color: C.text, marginBottom: 12 }}>{t("You're done!", 'Kamu selesai!')}</h3>
+            <p style={{ fontFamily: PJ, fontSize: 14, color: C.textSec, marginBottom: 28, lineHeight: 1.6 }}>{t('Speaking practice complete. Amazing work today.', 'Latihan berbicara selesai. Kerja keras yang luar biasa!')}</p>
+            <button onClick={() => { awardXp(20); finishLesson() }}
+              style={{ background: C.gold, color: '#0A0A0F', border: 'none', borderRadius: 14, padding: '16px 32px', fontSize: 16, fontWeight: 800, fontFamily: PJ, cursor: 'pointer', boxShadow: `0 0 28px ${C.goldGlow}` }}>
+              {t('Complete Lesson →', 'Selesaikan Pelajaran →')}
+            </button>
+          </div>
+        )
+      }
+
+      const prompt    = prompts[qIdx]
+      const enPrompt  = entry?.promptsEN?.[qIdx] || prompt
+
+      return (
+        <div>
+          <p style={{ fontFamily: PJ, fontSize: 12, color: C.textMuted, textAlign: 'center', marginBottom: 20 }}>
+            {t(`Prompt ${qIdx + 1} of 2`, `Prompt ${qIdx + 1} dari 2`)}
+          </p>
+          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, padding: 28, marginBottom: 20, textAlign: 'center' }}>
+            <div style={{ fontSize: 40, marginBottom: 16 }}>🎙️</div>
+            <p style={{ fontFamily: FR, fontSize: 19, fontWeight: 700, color: C.text, lineHeight: 1.55 }}>"{prompt}"</p>
+          </div>
+          <div style={{ background: C.elevated, borderRadius: 14, padding: '14px 18px', marginBottom: 20 }}>
+            <p style={{ fontFamily: PJ, fontSize: 13, fontWeight: 600, color: C.textMuted, marginBottom: 4 }}>💡 {t('Tip', 'Tips')}</p>
+            <p style={{ fontFamily: PJ, fontSize: 13, color: C.textSec, lineHeight: 1.5 }}>
+              {t('Say it out loud with confidence. Repeat 3× for best results.', 'Ucapkan dengan percaya diri. Ulangi 3× untuk hasil terbaik.')}
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button onClick={() => speak(enPrompt)}
+              style={{ flex: 1, background: C.elevated, color: C.text, border: `1px solid ${C.border}`, borderRadius: 14, padding: '14px', fontSize: 14, fontWeight: 600, fontFamily: PJ, cursor: 'pointer' }}>
+              🔊 {t('Listen', 'Dengar')}
+            </button>
+            <button onClick={() => { awardXp(10); setQIdx(i => i + 1) }}
+              style={{ flex: 2, background: C.accent, color: '#fff', border: 'none', borderRadius: 14, padding: '14px', fontSize: 15, fontWeight: 700, fontFamily: PJ, cursor: 'pointer', boxShadow: `0 0 20px ${C.accentGlow}` }}>
+              ✓ {t("I said it!", 'Sudah diucapkan!')}
+            </button>
           </div>
         </div>
+      )
+    }
 
-        <Wrap>
-          {/* Greeting */}
-          <div style={{ marginBottom: 24 }}>
-            <p style={{ color: C.textMuted, fontSize: 14 }}>{t('Selamat datang kembali', 'Welcome back')} 👋</p>
-            <h1 style={{ fontSize: 22, fontWeight: 800, color: C.text }}>{name || t('Pengguna FluentEdge', 'FluentEdge User')}</h1>
-          </div>
+    function renderActivity() {
+      switch (actIdx) {
+        case 0: return renderVocab()
+        case 1: return renderGrammar()
+        case 2: return renderReading()
+        case 3: return renderQuiz()
+        case 4: return renderSpeaking()
+        default: return null
+      }
+    }
 
-          {/* Stats row */}
-          <div style={{ display: 'flex', gap: 12, marginBottom: 28 }}>
-            {[
-              { icon: '🔥', label: t('Streak', 'Streak'), val: `1 ${t('hari', 'day')}`, color: '#EA580C', bg: '#FFF7ED' },
-              { icon: '⚡', label: 'XP',              val: '50',                   color: C.gold,    bg: C.goldBg },
-              { icon: '📚', label: t('Progress', 'Progress'), val: '1/30',           color: C.primary, bg: C.primaryLight },
-            ].map((s, i) => (
-              <Card key={i} style={{ flex: 1, padding: '14px 8px', textAlign: 'center', background: s.bg, borderColor: 'transparent' }}>
-                <div style={{ fontSize: 20, marginBottom: 4 }}>{s.icon}</div>
-                <div style={{ fontWeight: 800, fontSize: 16, color: s.color }}>{s.val}</div>
-                <div style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>{s.label}</div>
-              </Card>
-            ))}
-          </div>
-
-          {/* Today's plan */}
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 14 }}>
-            📋 {t('Rencana Hari Ini', "Today's Plan")}
-          </h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
-            {/* Completed */}
-            <Card style={{ padding: '16px 18px', background: C.successBg, borderColor: '#059669' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                <div style={{ width: 38, height: 38, borderRadius: 10, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#059669', fontSize: 18, fontWeight: 700 }}>✓</div>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: 14, color: C.success }}>{t(`Pelajaran 1 — ${ls.word}`, `Lesson 1 — ${ls.word}`)}</div>
-                  <div style={{ fontSize: 12, color: '#059669', marginTop: 2 }}>{t('Selesai', 'Completed')}</div>
-                </div>
+    return (
+      <Shell lang={lang} setLang={setLang} noLangToggle>
+        <div style={{ maxWidth: 420, margin: '0 auto', padding: '0 20px 60px' }}>
+          {/* Lesson header */}
+          <div style={{ padding: '18px 0 24px', display: 'flex', alignItems: 'center', gap: 14 }}>
+            <button onClick={() => setScreen('dashboard')}
+              style={{ background: 'none', border: 'none', color: C.textMuted, fontSize: 24, cursor: 'pointer', padding: 0, lineHeight: 1 }}>
+              ←
+            </button>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', gap: 4, marginBottom: 7 }}>
+                {[0, 1, 2, 3, 4].map(i => (
+                  <div key={i} style={{ flex: 1, height: 4, borderRadius: 2, background: i <= actIdx ? C.accent : C.border, transition: 'background 0.4s' }} />
+                ))}
               </div>
-            </Card>
-
-            {/* Next lesson */}
-            <Card style={{ padding: '16px 18px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                <div style={{ width: 38, height: 38, borderRadius: 10, background: C.primaryLight, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 18 }}>📖</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 700, fontSize: 14, color: C.text }}>{t('Pelajaran 2 — DELEGATE', 'Lesson 2 — DELEGATE')}</div>
-                  <div style={{ fontSize: 12, color: C.textMuted, marginTop: 2 }}>{t('Tersedia besok', 'Available tomorrow')}</div>
-                </div>
-                <div style={{ color: C.textLight, fontSize: 18 }}>›</div>
+              <div style={{ fontFamily: PJ, fontSize: 12, color: C.textMuted }}>
+                {ACT_ICONS[actIdx]} {ACT_LABELS[actIdx]}
               </div>
-            </Card>
-
-            {/* Locked */}
-            <Card style={{ padding: '16px 18px', opacity: 0.6 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                <div style={{ width: 38, height: 38, borderRadius: 10, background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 18, color: C.textLight }}>🔒</div>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: 14, color: C.textMuted }}>{t('Latihan Berbicara', 'Speaking Practice')}</div>
-                  <div style={{ fontSize: 12, color: C.textLight, marginTop: 2 }}>{t('Undang 1 teman untuk membuka', 'Invite 1 friend to unlock')}</div>
-                </div>
-              </div>
-            </Card>
-          </div>
-
-          {/* Referral banner */}
-          {refCode && (
-            <Card style={{ padding: '20px', marginBottom: 24, background: C.primaryLight, borderColor: C.primary }}>
-              <div style={{ fontWeight: 800, fontSize: 15, color: C.primary, marginBottom: 6 }}>
-                🎁 {t('Undang Teman, Dapat Reward!', 'Invite Friends, Get Rewards!')}
-              </div>
-              <div style={{ fontSize: 13, color: C.textMuted, marginBottom: 14 }}>
-                {t('Kode referralmu: ', 'Your code: ')}<strong style={{ color: C.primary, letterSpacing: 2 }}>{refCode}</strong>
-              </div>
-              <a href={waLink(refCode)} target="_blank" rel="noopener noreferrer"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#25D366', color: '#fff', fontWeight: 700, fontSize: 13, padding: '9px 18px', borderRadius: C.radiusSm, textDecoration: 'none' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                {t('Bagikan Sekarang', 'Share Now')}
-              </a>
-            </Card>
-          )}
-
-          {/* Path progress */}
-          <Card style={{ padding: '18px 20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-              <div>
-                <div style={{ fontWeight: 700, fontSize: 14, color: C.text }}>{t('Jalur', 'Path')} — {lvInfo[lang]}</div>
-                <div style={{ fontSize: 12, color: C.textMuted, marginTop: 2 }}>{t('29 pelajaran tersisa', '29 lessons remaining')}</div>
-              </div>
-              <span style={{ fontWeight: 800, fontSize: 16, color: C.primary }}>1/30</span>
             </div>
-            <div style={{ background: C.border, borderRadius: 100, height: 8, overflow: 'hidden' }}>
-              <div style={{ width: '3.3%', height: '100%', background: C.primary, borderRadius: 100 }} />
+            <div style={{ fontFamily: FR, fontSize: 15, fontWeight: 800, color: C.gold }}>
+              ⚡ +{lessonXp}
             </div>
-          </Card>
-        </Wrap>
-      </PageWrap>
+          </div>
+
+          {renderActivity()}
+        </div>
+      </Shell>
     )
   }
 
-  // ─── Router ───────────────────────────────────────────────────────────────────
+  /* ═══════════════════════════════════════════════════════════════════════════
+     LESSON DONE
+  ═══════════════════════════════════════════════════════════════════════════ */
+  if (screen === 'lesson-done') return (
+    <Shell lang={lang} setLang={setLang}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '48px 24px', textAlign: 'center' }}>
+        <div style={{ fontSize: 72, marginBottom: 24 }}>🎉</div>
+        <h1 style={{ fontFamily: FR, fontSize: 38, fontWeight: 900, color: C.text, marginBottom: 12 }}>
+          {t('Lesson Complete!', 'Pelajaran Selesai!')}
+        </h1>
+        <p style={{ fontFamily: PJ, fontSize: 15, color: C.textSec, marginBottom: 44, maxWidth: 280, lineHeight: 1.6 }}>
+          {t("You're building something real. Keep the streak alive.", 'Kamu sedang membangun sesuatu yang nyata. Pertahankan streakmu.')}
+        </p>
 
-  const screens = { splash: Splash, goal: Goal, level: Level, community: Community, building: Building, lesson: Lesson, 'lesson-done': LessonDone, register: Register, success: Success, dashboard: Dashboard }
-  const Screen = screens[screen] || Splash
+        <div style={{ display: 'flex', gap: 14, marginBottom: 44, width: '100%', maxWidth: 360 }}>
+          {[
+            { icon: '⚡', val: `+${lessonXp}`, label: 'XP' },
+            { icon: '🔥', val: streak,          label: t('Day Streak', 'Hari Berturut') },
+            { icon: '📅', val: completedDays.length, label: t('Days Done', 'Hari Selesai') },
+          ].map(s => (
+            <div key={s.label} style={{ flex: 1, background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: '18px 10px', textAlign: 'center' }}>
+              <div style={{ fontSize: 26 }}>{s.icon}</div>
+              <div style={{ fontFamily: FR, fontSize: 24, fontWeight: 800, color: C.gold, marginTop: 6 }}>{s.val}</div>
+              <div style={{ fontFamily: PJ, fontSize: 11, color: C.textMuted, marginTop: 4 }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
 
+        <button
+          onClick={() => setScreen('dashboard')}
+          style={{ width: '100%', maxWidth: 360, background: C.accent, color: '#fff', border: 'none', borderRadius: 16, padding: '18px', fontSize: 17, fontWeight: 700, fontFamily: PJ, cursor: 'pointer', boxShadow: `0 0 40px ${C.accentGlow}` }}>
+          {t('Back to Dashboard →', 'Kembali ke Dashboard →')}
+        </button>
+      </div>
+    </Shell>
+  )
+
+  return null
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   SHARED SUB-COMPONENTS
+═══════════════════════════════════════════════════════════════════════════════ */
+
+function Shell({ children, lang, setLang, noLangToggle }) {
   return (
     <>
       <Head>
-        <title>FluentEdge — Professional English</title>
-        <meta name="description" content={t('Kuasai bahasa Inggris profesional. Dirancang untuk para profesional di Batam.', 'Master professional English. Designed for Batam professionals.')} />
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-        <meta name="theme-color" content="#0A2540" />
+        <title>FluentEdge — English for Professionals</title>
+        <meta name="description" content="Master Business English in 6 months — 60 minutes a day. Built for professionals in Batam." />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,800;9..144,900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+        <style>{`
+          *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+          body { background: #0A0A0F; color: #F1F0EE; -webkit-font-smoothing: antialiased; }
+          @keyframes spin { to { transform: rotate(360deg); } }
+          @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+          input:focus { border-color: #6366F1 !important; box-shadow: 0 0 0 3px rgba(99,102,241,0.12) !important; }
+          button:active { transform: scale(0.96) !important; }
+          ::-webkit-scrollbar { width: 4px; }
+          ::-webkit-scrollbar-track { background: #0A0A0F; }
+          ::-webkit-scrollbar-thumb { background: #2A2A38; border-radius: 2px; }
+        `}</style>
       </Head>
-      <Screen />
+      <div style={{ background: '#0A0A0F', minHeight: '100vh' }}>
+        {!noLangToggle && (
+          <div style={{ position: 'fixed', top: 16, right: 16, zIndex: 200 }}>
+            <button
+              onClick={() => setLang(l => l === 'en' ? 'id' : 'en')}
+              style={{ background: '#1C1C24', border: '1px solid #2A2A38', borderRadius: 20, padding: '6px 14px', fontSize: 12, fontWeight: 700, color: '#94A3B8', cursor: 'pointer', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+              {lang === 'en' ? '🇮🇩 ID' : '🇬🇧 EN'}
+            </button>
+          </div>
+        )}
+        {children}
+      </div>
     </>
+  )
+}
+
+function SurveyLayout({ step, total, headline, sub, children }) {
+  return (
+    <div style={{ padding: '64px 24px 48px', maxWidth: 420, margin: '0 auto' }}>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 36, justifyContent: 'center' }}>
+        {Array.from({ length: total }, (_, i) => (
+          <div key={i} style={{ width: i + 1 === step ? 28 : 8, height: 8, borderRadius: 4, background: i + 1 <= step ? '#6366F1' : '#2A2A38', transition: 'all 0.35s ease' }} />
+        ))}
+      </div>
+      <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: 28, fontWeight: 900, color: '#F1F0EE', marginBottom: 10, textAlign: 'center', lineHeight: 1.25 }}>{headline}</h1>
+      {sub && <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, color: '#94A3B8', textAlign: 'center', marginBottom: 32, lineHeight: 1.6 }}>{sub}</p>}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>{children}</div>
+    </div>
+  )
+}
+
+function SurveyCard({ icon, title, desc, selected, onClick, compact }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        background: selected ? 'rgba(99,102,241,0.1)' : '#131318',
+        border: `1px solid ${selected ? '#6366F1' : '#2A2A38'}`,
+        borderRadius: 16,
+        padding: compact ? '14px 18px' : '18px 20px',
+        display: 'flex', alignItems: compact ? 'center' : 'flex-start', gap: 14,
+        cursor: 'pointer', textAlign: 'left', width: '100%',
+        transition: 'all 0.18s ease',
+        boxShadow: selected ? '0 0 20px rgba(99,102,241,0.15)' : 'none',
+      }}>
+      <span style={{ fontSize: compact ? 22 : 28, flexShrink: 0 }}>{icon}</span>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: compact ? 15 : 16, fontWeight: 700, color: '#F1F0EE' }}>{title}</div>
+        {desc && <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 13, color: '#94A3B8', marginTop: 3, lineHeight: 1.4 }}>{desc}</div>}
+      </div>
+      {selected && <span style={{ color: '#6366F1', fontSize: 20, flexShrink: 0 }}>✓</span>}
+    </button>
+  )
+}
+
+function MCQQuestion({ question, subtext, options, answer, selected, feedback, lang, onSelect, onNext, progress }) {
+  const C2 = {
+    card: '#131318', elevated: '#1C1C24', border: '#2A2A38',
+    accent: '#6366F1', accentGlow: 'rgba(99,102,241,0.15)',
+    success: '#10B981', successBg: 'rgba(16,185,129,0.08)',
+    error: '#F43F5E',   errorBg:   'rgba(244,63,94,0.08)',
+    text: '#F1F0EE', textSec: '#94A3B8', textMuted: '#64748B',
+  }
+  return (
+    <div>
+      {progress && (
+        <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 12, color: C2.textMuted, marginBottom: 16, textAlign: 'center' }}>{progress}</p>
+      )}
+      <div style={{ background: C2.card, border: `1px solid ${C2.border}`, borderRadius: 20, padding: 24, marginBottom: 18 }}>
+        {subtext && <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, color: C2.textMuted, marginBottom: 8 }}>{subtext}</p>}
+        <p style={{ fontFamily: "'Fraunces', serif", fontSize: 20, fontWeight: 700, color: C2.text, lineHeight: 1.45 }}>{question}</p>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {(options || []).map((opt, i) => {
+          const isSel     = selected === opt
+          const isCorrect = opt === answer
+          let bg = C2.elevated, border = C2.border, color = C2.text
+          if (feedback) {
+            if (isSel && isCorrect)    { bg = C2.successBg; border = C2.success; color = C2.success }
+            else if (isSel && !isCorrect) { bg = C2.errorBg;   border = C2.error;   color = C2.error }
+            else if (!isSel && isCorrect) { bg = C2.successBg; border = C2.success; color = C2.success }
+          }
+          return (
+            <button key={i} disabled={!!feedback} onClick={() => !feedback && onSelect(opt)}
+              style={{ background: bg, border: `1px solid ${border}`, borderRadius: 14, padding: '14px 18px', fontSize: 15, fontFamily: "'Plus Jakarta Sans', sans-serif", color, cursor: feedback ? 'default' : 'pointer', textAlign: 'left', transition: 'all 0.15s', fontWeight: isSel ? 600 : 400 }}>
+              {opt}
+            </button>
+          )
+        })}
+      </div>
+      {feedback && (
+        <div style={{ marginTop: 16 }}>
+          <div style={{ background: feedback === 'correct' ? C2.successBg : C2.errorBg, border: `1px solid ${feedback === 'correct' ? C2.success : C2.error}`, borderRadius: 14, padding: '14px 18px', marginBottom: 12 }}>
+            <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, fontWeight: 700, color: feedback === 'correct' ? C2.success : C2.error, margin: 0 }}>
+              {feedback === 'correct' ? `✓ ${lang === 'en' ? 'Correct!' : 'Benar!'}` : `✗ ${lang === 'en' ? 'Not quite.' : 'Kurang tepat.'}`}
+            </p>
+            {feedback === 'wrong' && (
+              <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 13, color: C2.text, margin: '6px 0 0' }}>
+                {lang === 'en' ? 'Correct answer: ' : 'Jawaban benar: '}<strong>{answer}</strong>
+              </p>
+            )}
+          </div>
+          <button onClick={onNext}
+            style={{ width: '100%', background: C2.accent, color: '#fff', border: 'none', borderRadius: 14, padding: '16px', fontSize: 16, fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif", cursor: 'pointer', boxShadow: `0 0 28px ${C2.accentGlow}` }}>
+            {lang === 'en' ? 'Next →' : 'Lanjut →'}
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function CenteredCompletion({ icon, msg, btnLabel, onNext }) {
+  return (
+    <div style={{ textAlign: 'center', padding: '40px 0' }}>
+      <div style={{ fontSize: 48, marginBottom: 16 }}>{icon}</div>
+      <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 15, color: '#94A3B8', marginBottom: 28, lineHeight: 1.6 }}>{msg}</p>
+      <button onClick={onNext}
+        style={{ background: '#6366F1', color: '#fff', border: 'none', borderRadius: 14, padding: '16px 32px', fontSize: 16, fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif", cursor: 'pointer', boxShadow: '0 0 28px rgba(99,102,241,0.15)' }}>
+        {btnLabel}
+      </button>
+    </div>
   )
 }
