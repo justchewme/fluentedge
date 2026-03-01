@@ -16,7 +16,7 @@ export default function Admin() {
   const [filterLevel, setFilterLevel] = useState('')
   const [search, setSearch] = useState('')
 
-  const [sortKey, setSortKey] = useState('JoinDate')
+  const [sortKey, setSortKey] = useState('joinDate')
   const [sortDir, setSortDir] = useState('desc')
 
   const handleLogin = () => {
@@ -39,7 +39,7 @@ export default function Admin() {
           setFetchError(data.error)
         }
       } else {
-        setUsers(data.users || [])
+        setUsers(data.leads || [])
       }
     } catch (e) {
       setFetchError('Failed to load users')
@@ -54,15 +54,15 @@ export default function Admin() {
   // ─── Filter + Sort ──────────────────────────────────────────────────────
   const filtered = users
     .filter((u) => {
-      const matchCity = !filterCity || u.City === filterCity
-      const matchLevel = !filterLevel || (u.Level || '').includes(filterLevel)
-      const matchSearch = !search || (u.Name || '').toLowerCase().includes(search.toLowerCase()) || (u.WhatsApp || '').includes(search)
+      const matchCity = !filterCity || u.city === filterCity
+      const matchLevel = !filterLevel || (u.level || '').toLowerCase().includes(filterLevel.toLowerCase())
+      const matchSearch = !search || (u.name || '').toLowerCase().includes(search.toLowerCase()) || (u.whatsapp || '').includes(search)
       return matchCity && matchLevel && matchSearch
     })
     .sort((a, b) => {
       let va = a[sortKey] || ''
       let vb = b[sortKey] || ''
-      if (sortKey === 'Score') { va = Number(va) || 0; vb = Number(vb) || 0 }
+      if (sortKey === 'score') { va = Number(va) || 0; vb = Number(vb) || 0 }
       if (va < vb) return sortDir === 'asc' ? -1 : 1
       if (va > vb) return sortDir === 'asc' ? 1 : -1
       return 0
@@ -70,9 +70,10 @@ export default function Admin() {
 
   // ─── CSV export ──────────────────────────────────────────────────────────
   const exportCSV = () => {
-    const headers = ['Name', 'WhatsApp', 'City', 'Level', 'Score', 'ReferralCode', 'ReferralFrom', 'Source', 'JoinDate']
-    const rows = filtered.map((u) => headers.map((h) => `"${(u[h] || '').replace(/"/g, '""')}"`).join(','))
-    const csv = [headers.join(','), ...rows].join('\n')
+    const headers = ['name', 'whatsapp', 'city', 'level', 'score', 'referralCode', 'referralFrom', 'referralCount', 'religion', 'joinDate']
+    const displayHeaders = ['Name', 'WhatsApp', 'City', 'Level', 'Score', 'Referral Code', 'Referred By', 'Referral Count', 'Community', 'Joined']
+    const rows = filtered.map((u) => headers.map((h) => `"${(u[h] ?? '').toString().replace(/"/g, '""')}"`).join(','))
+    const csv = [displayHeaders.join(','), ...rows].join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -95,13 +96,27 @@ export default function Admin() {
 
   const levelBadgeColor = (level) => {
     if (!level) return '#555'
-    if (level.includes('High')) return '#FFD700'
-    if (level.includes('Medium')) return '#00BFFF'
+    const l = level.toLowerCase()
+    if (l === 'high') return '#FFD700'
+    if (l === 'medium') return '#00BFFF'
     return '#9B59B6'
   }
 
-  const CITIES = ['Batam', 'Tanjung Pinang', 'Bintan', 'Karimun', 'Kota lain']
-  const LEVELS = ['Lower', 'Medium', 'High']
+  const levelLabel = (level) => {
+    if (!level) return '—'
+    const map = { lower: 'Pemula (A1–A2)', medium: 'Menengah (B1–B2)', high: 'Mahir (C1)' }
+    return map[level.toLowerCase()] || level
+  }
+
+  const formatWA = (wa) => {
+    if (!wa) return ''
+    let num = wa.replace(/[^0-9]/g, '')
+    if (num.startsWith('0')) num = '62' + num.slice(1)
+    return num
+  }
+
+  const CITIES = ['Batam', 'Tanjung Pinang', 'Bintan', 'Karimun']
+  const LEVELS = ['lower', 'medium', 'high']
 
   // ─── Styles ──────────────────────────────────────────────────────────────
   const s = {
@@ -192,9 +207,9 @@ export default function Admin() {
           <div style={{ display: 'flex', gap: '16px', marginBottom: '28px', flexWrap: 'wrap' }}>
             {[
               { label: 'Total Users', value: users.length, icon: '👥' },
-              { label: 'Batam Region', value: users.filter(u => ['Batam','Tanjung Pinang','Bintan','Karimun'].includes(u.City)).length, icon: '📍' },
-              { label: 'High (B2)', value: users.filter(u => (u.Level||'').includes('High')).length, icon: '🏆' },
-              { label: 'With Referrals', value: users.filter(u => u.ReferralFrom).length, icon: '🔗' },
+              { label: 'Batam Region', value: users.filter(u => ['Batam','Tanjung Pinang','Bintan','Karimun'].includes(u.city)).length, icon: '📍' },
+              { label: 'Faith Community', value: users.filter(u => u.religion === 'faith').length, icon: '⛪' },
+              { label: 'With Referrals', value: users.filter(u => u.referralFrom).length, icon: '🔗' },
             ].map((stat) => (
               <div key={stat.label} style={{ flex: '1', minWidth: '140px', padding: '16px 20px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px' }}>
                 <div style={{ fontSize: '24px', marginBottom: '6px' }}>{stat.icon}</div>
@@ -223,7 +238,9 @@ export default function Admin() {
             {/* Level filter */}
             <select style={s.select} value={filterLevel} onChange={(e) => setFilterLevel(e.target.value)}>
               <option value="">All Levels</option>
-              {LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
+              <option value="lower">Pemula (A1–A2)</option>
+              <option value="medium">Menengah (B1–B2)</option>
+              <option value="high">Mahir (C1)</option>
             </select>
 
             {/* Refresh */}
@@ -264,14 +281,14 @@ export default function Admin() {
                 <thead>
                   <tr style={{ background: 'rgba(255,255,255,0.03)' }}>
                     {[
-                      { key: 'Name', label: 'Name' },
-                      { key: 'WhatsApp', label: 'WhatsApp' },
-                      { key: 'City', label: 'City' },
-                      { key: 'Level', label: 'Level' },
-                      { key: 'Score', label: 'Score' },
-                      { key: 'ReferralCode', label: 'Ref Code' },
-                      { key: 'ReferralFrom', label: 'Referred By' },
-                      { key: 'JoinDate', label: 'Joined' },
+                      { key: 'name', label: 'Name' },
+                      { key: 'whatsapp', label: 'WhatsApp' },
+                      { key: 'city', label: 'City' },
+                      { key: 'level', label: 'Level' },
+                      { key: 'score', label: 'XP' },
+                      { key: 'referralCode', label: 'Ref Code' },
+                      { key: 'referralFrom', label: 'Referred By' },
+                      { key: 'joinDate', label: 'Joined' },
                       { key: '_action', label: 'Action' },
                     ].map((col) => (
                       <th
@@ -294,49 +311,49 @@ export default function Admin() {
                       onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                     >
                       <td style={s.td}>
-                        <div style={{ fontWeight: '600' }}>{user.Name || '—'}</div>
+                        <div style={{ fontWeight: '600' }}>{user.name || '—'}</div>
                       </td>
                       <td style={s.td}>
                         <span style={{ fontFamily: 'monospace', fontSize: '13px', color: 'rgba(255,255,255,0.6)' }}>
-                          {maskWA(user.WhatsApp)}
+                          {maskWA(user.whatsapp)}
                         </span>
                       </td>
                       <td style={s.td}>
                         <span style={{ padding: '3px 10px', background: 'rgba(255,255,255,0.05)', borderRadius: '99px', fontSize: '12px', whiteSpace: 'nowrap' }}>
-                          {user.City || '—'}
+                          {user.city || '—'}
                         </span>
                       </td>
                       <td style={s.td}>
-                        {user.Level ? (
-                          <span style={{ padding: '3px 10px', background: `${levelBadgeColor(user.Level)}22`, border: `1px solid ${levelBadgeColor(user.Level)}55`, borderRadius: '99px', fontSize: '12px', color: levelBadgeColor(user.Level), fontWeight: '700', whiteSpace: 'nowrap' }}>
-                            {user.Level}
+                        {user.level ? (
+                          <span style={{ padding: '3px 10px', background: `${levelBadgeColor(user.level)}22`, border: `1px solid ${levelBadgeColor(user.level)}55`, borderRadius: '99px', fontSize: '12px', color: levelBadgeColor(user.level), fontWeight: '700', whiteSpace: 'nowrap' }}>
+                            {levelLabel(user.level)}
                           </span>
                         ) : '—'}
                       </td>
                       <td style={{ ...s.td, textAlign: 'center' }}>
-                        <span style={{ fontWeight: '700', color: user.Score >= 4 ? '#FFD700' : user.Score >= 2 ? '#00BFFF' : 'rgba(255,255,255,0.4)' }}>
-                          {user.Score ?? '—'}/5
+                        <span style={{ fontWeight: '700', color: (user.score || 0) > 0 ? '#FFD700' : 'rgba(255,255,255,0.4)' }}>
+                          {user.score ?? 0} XP
                         </span>
                       </td>
                       <td style={s.td}>
                         <span style={{ fontFamily: 'monospace', fontSize: '12px', color: '#00BFFF' }}>
-                          {user.ReferralCode || '—'}
+                          {user.referralCode || '—'}
                         </span>
                       </td>
                       <td style={s.td}>
                         <span style={{ fontFamily: 'monospace', fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>
-                          {user.ReferralFrom || '—'}
+                          {user.referralFrom || '—'}
                         </span>
                       </td>
                       <td style={s.td}>
                         <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap' }}>
-                          {user.JoinDate ? new Date(user.JoinDate).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                          {user.joinDate ? new Date(user.joinDate).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
                         </span>
                       </td>
                       <td style={s.td}>
-                        {user.WhatsApp && (
+                        {user.whatsapp && (
                           <a
-                            href={`https://wa.me/${user.WhatsApp.replace(/[^0-9]/g, '')}`}
+                            href={`https://wa.me/${formatWA(user.whatsapp)}`}
                             target="_blank"
                             rel="noreferrer"
                             style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', background: 'rgba(37,211,102,0.12)', border: '1px solid rgba(37,211,102,0.25)', borderRadius: '8px', color: '#25D366', fontSize: '12px', fontWeight: '700', textDecoration: 'none', whiteSpace: 'nowrap', fontFamily: 'inherit' }}

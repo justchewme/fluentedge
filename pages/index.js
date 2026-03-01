@@ -208,10 +208,13 @@ export default function Home() {
     setCopied(true); setTimeout(() => setCopied(false), 2000)
   }
 
-  const waLink = (code) => `https://wa.me/?text=${encodeURIComponent(t(
-    `Hei! Aku lagi pakai FluentEdge buat belajar bahasa Inggris. Gratis & bagus banget! Coba juga yuk 👉 https://fluentedge-three.vercel.app${code ? '?ref=' + code : ''}`,
-    `Hey! I'm using FluentEdge to improve my English. It's free and amazing! Join me 👉 https://fluentedge-three.vercel.app${code ? '?ref=' + code : ''}`
-  ))}`
+  const waLink = (code) => {
+    const ref = code ? `?ref=${code}` : ''
+    return `https://wa.me/?text=${encodeURIComponent(t(
+      `Hei! Aku lagi pakai FluentEdge buat belajar bahasa Inggris profesional. Gratis! Coba juga yuk 👉 https://fluentedge-three.vercel.app${ref}`,
+      `Hey! I'm using FluentEdge to improve my professional English. It's free! Join me 👉 https://fluentedge-three.vercel.app${ref}`
+    ))}`
+  }
 
   // ─── Screens ────────────────────────────────────────────────────────────────
 
