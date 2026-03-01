@@ -6,23 +6,23 @@ import { VOCAB_BANK, GRAMMAR_BANK, READING_BANK, SPEAKING_BANK, CURRICULUM_WEEKS
    DESIGN TOKENS
 ═══════════════════════════════════════════════════════════════════════════════ */
 const C = {
-  bg:           '#0A0A0F',
-  card:         '#131318',
-  elevated:     '#1C1C24',
-  border:       '#2A2A38',
-  accent:       '#6366F1',
-  accentHov:    '#818CF8',
-  accentGlow:   'rgba(99,102,241,0.15)',
-  accentBorder: 'rgba(99,102,241,0.35)',
-  gold:         '#F59E0B',
-  goldGlow:     'rgba(245,158,11,0.15)',
-  success:      '#10B981',
-  successBg:    'rgba(16,185,129,0.08)',
-  error:        '#F43F5E',
-  errorBg:      'rgba(244,63,94,0.08)',
-  text:         '#F1F0EE',
-  textSec:      '#94A3B8',
-  textMuted:    '#64748B',
+  bg:           '#F7F4EF',  // warm linen parchment
+  card:         '#FFFFFF',  // pure white
+  elevated:     '#EDE9E3',  // warm stone
+  border:       '#D8D2C8',  // warm taupe
+  accent:       '#2D5016',  // deep forest green
+  accentHov:    '#1E3A0F',  // darker forest green
+  accentGlow:   'rgba(45,80,22,0.1)',
+  accentBorder: 'rgba(45,80,22,0.22)',
+  gold:         '#C4973A',  // muted antique gold
+  goldGlow:     'rgba(196,151,58,0.12)',
+  success:      '#2D5016',
+  successBg:    'rgba(45,80,22,0.07)',
+  error:        '#8B3030',  // deep burgundy
+  errorBg:      'rgba(139,48,48,0.07)',
+  text:         '#1A1816',  // warm near-black
+  textSec:      '#6B6560',  // warm mid-gray
+  textMuted:    '#9E9890',  // light warm gray
 }
 const FR = "'Fraunces', Georgia, serif"
 const PJ = "'Plus Jakarta Sans', -apple-system, sans-serif"
@@ -212,8 +212,8 @@ export default function FluentEdge() {
   if (screen === 'splash') return (
     <Shell lang={lang} setLang={setLang}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '48px 24px', textAlign: 'center' }}>
-        <div style={{ width: 76, height: 76, borderRadius: 22, background: `linear-gradient(135deg, ${C.accent} 0%, #818CF8 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 28, boxShadow: `0 0 56px ${C.accentGlow}, 0 0 120px rgba(99,102,241,0.06)` }}>
-          <span style={{ fontSize: 34 }}>⚡</span>
+        <div style={{ width: 64, height: 64, borderRadius: 16, background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 28 }}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
         </div>
 
         <p style={{ fontFamily: PJ, fontSize: 12, fontWeight: 700, letterSpacing: '0.18em', color: C.accent, textTransform: 'uppercase', marginBottom: 18 }}>FluentEdge</p>
@@ -260,10 +260,10 @@ export default function FluentEdge() {
         headline={t('Why do you want to master English?', 'Kenapa kamu ingin mahir bahasa Inggris?')}
         sub={t("We'll tailor your plan to your specific goal.", 'Kami sesuaikan programmu dengan tujuanmu.')}>
         {[
-          { id: 'career',    icon: '💼', en: 'Career Growth',        id_: 'Karir & Promosi',         desc: t('Get promoted, earn more, impress leadership',           'Naik jabatan, gaji lebih tinggi, impress atasan') },
-          { id: 'business',  icon: '🤝', en: 'Business & Trade',     id_: 'Bisnis & Perdagangan',    desc: t('Deal with Singapore clients and partners',             'Deal dengan klien dan mitra Singapura') },
-          { id: 'travel',    icon: '✈️', en: 'Global Mobility',      id_: 'Mobilitas Global',        desc: t('Travel, study, and work abroad with confidence',       'Bepergian dan bekerja di luar negeri') },
-          { id: 'education', icon: '📚', en: 'Academic Excellence',  id_: 'Pendidikan Lebih Tinggi', desc: t('Scholarships, exams, overseas study',                  'Beasiswa, ujian, kuliah ke luar negeri') },
+          { id: 'career',    icon: 'briefcase', en: 'Career Growth',        id_: 'Karir & Promosi',         desc: t('Get promoted, earn more, impress leadership',           'Naik jabatan, gaji lebih tinggi, impress atasan') },
+          { id: 'business',  icon: 'exchange',  en: 'Business & Trade',     id_: 'Bisnis & Perdagangan',    desc: t('Deal with Singapore clients and partners',             'Deal dengan klien dan mitra Singapura') },
+          { id: 'travel',    icon: 'globe',     en: 'Global Mobility',      id_: 'Mobilitas Global',        desc: t('Travel, study, and work abroad with confidence',       'Bepergian dan bekerja di luar negeri') },
+          { id: 'education', icon: 'book-open', en: 'Academic Excellence',  id_: 'Pendidikan Lebih Tinggi', desc: t('Scholarships, exams, overseas study',                  'Beasiswa, ujian, kuliah ke luar negeri') },
         ].map(opt => (
           <SurveyCard key={opt.id} icon={opt.icon} title={t(opt.en, opt.id_)} desc={opt.desc}
             selected={goal === opt.id}
@@ -282,9 +282,9 @@ export default function FluentEdge() {
         headline={t('How is your English right now?', 'Seberapa bagus Bahasa Inggris kamu sekarang?')}
         sub={t("Be honest — we'll meet you exactly where you are.", 'Jawab jujur — kami mulai dari levelmu.')}>
         {[
-          { id: 'beginner',     icon: '🌱', en: 'Beginner',     id_: 'Pemula',   desc: t('I know basic words but struggle with full sentences', 'Tahu kata-kata dasar tapi susah buat kalimat') },
-          { id: 'intermediate', icon: '⚡', en: 'Intermediate', id_: 'Menengah', desc: t('I can communicate but make mistakes often',           'Bisa berkomunikasi tapi masih sering salah') },
-          { id: 'advanced',     icon: '🏆', en: 'Advanced',     id_: 'Mahir',    desc: t("I'm fairly fluent but want to sound more professional", 'Cukup lancar tapi mau lebih profesional') },
+          { id: 'beginner',     icon: 'chart-start', en: 'Beginner',     id_: 'Pemula',   desc: t('I know basic words but struggle with full sentences', 'Tahu kata-kata dasar tapi susah buat kalimat') },
+          { id: 'intermediate', icon: 'chart-mid',   en: 'Intermediate', id_: 'Menengah', desc: t('I can communicate but make mistakes often',           'Bisa berkomunikasi tapi masih sering salah') },
+          { id: 'advanced',     icon: 'chart-top',   en: 'Advanced',     id_: 'Mahir',    desc: t("I'm fairly fluent but want to sound more professional", 'Cukup lancar tapi mau lebih profesional') },
         ].map(opt => (
           <SurveyCard key={opt.id} icon={opt.icon} title={t(opt.en, opt.id_)} desc={opt.desc}
             selected={level === opt.id}
@@ -303,12 +303,12 @@ export default function FluentEdge() {
         headline={t("What's your field?", 'Apa bidang pekerjaanmu?')}
         sub={t('Your lessons will use real scenarios from your industry.', 'Pelajaranmu disesuaikan dengan industri dan situasimu.')}>
         {[
-          { id: 'manufacturing', icon: '🏭', en: 'Manufacturing',       id_: 'Manufaktur & Pabrik' },
-          { id: 'trading',       icon: '📦', en: 'Trading & Logistics', id_: 'Trading & Logistik' },
-          { id: 'finance',       icon: '💳', en: 'Finance & Banking',   id_: 'Keuangan & Perbankan' },
-          { id: 'technology',    icon: '💻', en: 'Technology',          id_: 'Teknologi & IT' },
-          { id: 'hospitality',   icon: '🏨', en: 'Hospitality',         id_: 'Perhotelan & Pariwisata' },
-          { id: 'other',         icon: '🌐', en: 'Other',               id_: 'Lainnya' },
+          { id: 'manufacturing', icon: 'building',   en: 'Manufacturing',       id_: 'Manufaktur & Pabrik' },
+          { id: 'trading',       icon: 'cube',       en: 'Trading & Logistics', id_: 'Trading & Logistik' },
+          { id: 'finance',       icon: 'chart-bar',  en: 'Finance & Banking',   id_: 'Keuangan & Perbankan' },
+          { id: 'technology',    icon: 'cpu',        en: 'Technology',          id_: 'Teknologi & IT' },
+          { id: 'hospitality',   icon: 'star',       en: 'Hospitality',         id_: 'Perhotelan & Pariwisata' },
+          { id: 'other',         icon: 'globe',      en: 'Other',               id_: 'Lainnya' },
         ].map(opt => (
           <SurveyCard key={opt.id} icon={opt.icon} title={t(opt.en, opt.id_)} compact
             selected={industry === opt.id}
@@ -327,9 +327,9 @@ export default function FluentEdge() {
         headline={t('One last thing…', 'Satu hal lagi…')}
         sub={t('Are you part of a spiritual community? (Optional)', 'Apakah kamu bagian dari komunitas iman? (Opsional)')}>
         {[
-          { id: 'faith', icon: '✝️', en: "Yes, I'm part of a faith community",  id_: 'Ya, saya bagian dari komunitas iman' },
-          { id: 'other', icon: '🤲', en: 'I practice a different faith',         id_: 'Saya memeluk kepercayaan lain' },
-          { id: 'none',  icon: '🙅', en: "I'd rather not say",                   id_: 'Saya tidak ingin berbagi' },
+          { id: 'faith', icon: 'cross',      en: "Yes, I'm part of a faith community",  id_: 'Ya, saya bagian dari komunitas iman' },
+          { id: 'other', icon: 'hand',       en: 'I practice a different faith',         id_: 'Saya memeluk kepercayaan lain' },
+          { id: 'none',  icon: 'no-symbol',  en: "I'd rather not say",                   id_: 'Saya tidak ingin berbagi' },
         ].map(opt => (
           <SurveyCard key={opt.id} icon={opt.icon} title={t(opt.en, opt.id_)} compact
             selected={faith === opt.id}
@@ -407,15 +407,15 @@ export default function FluentEdge() {
               </div>
             </div>
             {[
-              { icon: '⏱️', label: t('Daily practice', 'Latihan harian'),   value: '60 min' },
-              { icon: '📖', label: t('Total lessons', 'Total pelajaran'),    value: '180' },
-              { icon: '💬', label: t('Vocabulary words', 'Kosakata baru'),   value: '1,200+' },
-              { icon: '📅', label: t('Program duration', 'Durasi program'),  value: t('26 weeks', '26 minggu') },
-              { icon: '🏁', label: t('Target level', 'Target level'),        value: targetLevel },
+              { icon: 'timer',    label: t('Daily practice', 'Latihan harian'),   value: '60 min' },
+              { icon: 'book-open',label: t('Total lessons', 'Total pelajaran'),    value: '180' },
+              { icon: 'chat',     label: t('Vocabulary words', 'Kosakata baru'),   value: '1,200+' },
+              { icon: 'calendar', label: t('Program duration', 'Durasi program'),  value: t('26 weeks', '26 minggu') },
+              { icon: 'flag',     label: t('Target level', 'Target level'),        value: targetLevel },
             ].map(s => (
               <div key={s.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderTop: `1px solid ${C.border}` }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontSize: 18 }}>{s.icon}</span>
+                  <Icon name={s.icon} size={16} color={C.textMuted} />
                   <span style={{ fontFamily: PJ, fontSize: 14, color: C.textSec }}>{s.label}</span>
                 </div>
                 <span style={{ fontFamily: FR, fontSize: 18, fontWeight: 700, color: C.accent }}>{s.value}</span>
@@ -496,10 +496,9 @@ export default function FluentEdge() {
               <p style={{ fontFamily: PJ, fontSize: 13, color: C.textMuted, marginBottom: 3 }}>{t('Good morning,', 'Selamat pagi,')}</p>
               <h1 style={{ fontFamily: FR, fontSize: 30, fontWeight: 800, color: C.text }}>{firstName} 👋</h1>
             </div>
-            <div style={{ background: C.elevated, border: `1px solid ${C.border}`, borderRadius: 14, padding: '12px 16px', textAlign: 'center', minWidth: 64 }}>
-              <div style={{ fontSize: 22 }}>🔥</div>
-              <div style={{ fontFamily: FR, fontSize: 20, fontWeight: 800, color: C.gold, lineHeight: 1 }}>{streak}</div>
-              <div style={{ fontFamily: PJ, fontSize: 10, color: C.textMuted, marginTop: 2 }}>{t('streak', 'berturut')}</div>
+            <div style={{ background: C.elevated, border: `1px solid ${C.border}`, borderRadius: 12, padding: '12px 16px', textAlign: 'center', minWidth: 64 }}>
+              <div style={{ fontFamily: FR, fontSize: 22, fontWeight: 800, color: C.accent, lineHeight: 1 }}>{streak}</div>
+              <div style={{ fontFamily: PJ, fontSize: 10, fontWeight: 600, color: C.textMuted, marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{t('Streak', 'Streak')}</div>
             </div>
           </div>
 
@@ -507,7 +506,7 @@ export default function FluentEdge() {
           <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: '16px 20px', marginBottom: 18 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
               <span style={{ fontFamily: PJ, fontSize: 13, fontWeight: 600, color: C.textSec }}>{t('Overall Progress', 'Progres Keseluruhan')}</span>
-              <span style={{ fontFamily: FR, fontSize: 16, fontWeight: 800, color: C.gold }}>⚡ {xp.toLocaleString()} XP</span>
+              <span style={{ fontFamily: FR, fontSize: 16, fontWeight: 800, color: C.accent }}>{xp.toLocaleString()} <span style={{ fontFamily: PJ, fontSize: 12, fontWeight: 600 }}>XP</span></span>
             </div>
             <div style={{ background: C.elevated, borderRadius: 6, height: 6, overflow: 'hidden' }}>
               <div style={{ width: `${Math.max(overallPct, 0)}%`, height: '100%', background: `linear-gradient(90deg, ${C.accent}, ${C.accentHov})`, borderRadius: 6, transition: 'width 0.8s cubic-bezier(0.34,1.56,0.64,1)', minWidth: overallPct > 0 ? 8 : 0 }} />
@@ -518,7 +517,7 @@ export default function FluentEdge() {
           </div>
 
           {/* Today's lesson */}
-          <div style={{ background: `linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(99,102,241,0.04) 100%)`, border: `1px solid ${C.accentBorder}`, borderRadius: 22, padding: 24, marginBottom: 18 }}>
+          <div style={{ background: `linear-gradient(135deg, rgba(45,80,22,0.06) 0%, rgba(45,80,22,0.02) 100%)`, border: `1px solid ${C.accentBorder}`, borderRadius: 22, padding: 24, marginBottom: 18 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
               <p style={{ fontFamily: PJ, fontSize: 11, fontWeight: 700, color: C.accent, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
                 {t(`Week ${week} · Day ${day}`, `Minggu ${week} · Hari ${day}`)}
@@ -535,15 +534,15 @@ export default function FluentEdge() {
             {/* Activity icons */}
             <div style={{ display: 'flex', gap: 6, marginBottom: 20 }}>
               {[
-                { icon: '📖', label: t('Vocab', 'Kosakata') },
-                { icon: '📝', label: t('Grammar', 'Grammar') },
-                { icon: '📄', label: t('Reading', 'Baca') },
-                { icon: '❓', label: t('Quiz', 'Kuis') },
-                { icon: '🎙️', label: t('Speaking', 'Bicara') },
+                { icon: 'book-open', label: t('Vocab', 'Kosakata') },
+                { icon: 'pencil',    label: t('Grammar', 'Grammar') },
+                { icon: 'document',  label: t('Reading', 'Baca') },
+                { icon: 'question',  label: t('Quiz', 'Kuis') },
+                { icon: 'microphone',label: t('Speaking', 'Bicara') },
               ].map((a, i) => (
-                <div key={i} style={{ flex: 1, background: C.card, borderRadius: 10, padding: '8px 4px', textAlign: 'center' }}>
-                  <div style={{ fontSize: 14 }}>{a.icon}</div>
-                  <div style={{ fontFamily: PJ, fontSize: 9, color: C.textMuted, marginTop: 3 }}>{a.label}</div>
+                <div key={i} style={{ flex: 1, background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, padding: '10px 4px', textAlign: 'center' }}>
+                  <Icon name={a.icon} size={14} color={C.textMuted} />
+                  <div style={{ fontFamily: PJ, fontSize: 9, color: C.textMuted, marginTop: 4, letterSpacing: '0.04em' }}>{a.label}</div>
                 </div>
               ))}
             </div>
@@ -593,7 +592,7 @@ export default function FluentEdge() {
      LESSON
   ═══════════════════════════════════════════════════════════════════════════ */
   if (screen === 'lesson' && lessonData) {
-    const ACT_ICONS  = ['📖', '📝', '📄', '❓', '🎙️']
+    const ACT_ICONS  = ['book-open', 'pencil', 'document', 'question', 'microphone']
     const ACT_LABELS = [t('Vocabulary', 'Kosakata'), t('Grammar', 'Tata Bahasa'), t('Reading', 'Membaca'), t('Quiz', 'Kuis'), t('Speaking', 'Berbicara')]
 
     /* ── Vocab ─────────────────────────────────────────────────────────────── */
@@ -619,8 +618,8 @@ export default function FluentEdge() {
                 <div style={{ fontFamily: PJ, fontSize: 16, color: C.textMuted }}>{card.phonetic}</div>
                 <p style={{ fontFamily: PJ, fontSize: 12, color: C.textMuted, marginTop: 28 }}>{t('Tap to reveal meaning', 'Ketuk untuk lihat arti')}</p>
                 <button onClick={e => { e.stopPropagation(); speak(card.word) }}
-                  style={{ position: 'absolute', top: 16, right: 16, background: C.elevated, border: `1px solid ${C.border}`, borderRadius: 10, padding: '8px 10px', fontSize: 18, cursor: 'pointer', lineHeight: 1 }}>
-                  🔊
+                  style={{ position: 'absolute', top: 16, right: 16, background: C.elevated, border: `1px solid ${C.border}`, borderRadius: 8, padding: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon name="speaker" size={16} color={C.textMuted} />
                 </button>
               </div>
               {/* Back */}
@@ -671,7 +670,7 @@ export default function FluentEdge() {
     /* ── Grammar ───────────────────────────────────────────────────────────── */
     function renderGrammar() {
       const g = lessonData.grammar
-      if (!g) return <CenteredCompletion icon="📝" msg={t('No grammar today!', 'Tidak ada grammar hari ini!')} btnLabel={t('Next →', 'Lanjut →')} onNext={() => { awardXp(30); nextAct() }} />
+      if (!g) return <CenteredCompletion icon="pencil" msg={t('No grammar today!', 'Tidak ada grammar hari ini!')} btnLabel={t('Next →', 'Lanjut →')} onNext={() => { awardXp(30); nextAct() }} />
 
       // Grammar intro (qIdx === 0)
       if (qIdx === 0) {
@@ -723,7 +722,7 @@ export default function FluentEdge() {
     /* ── Reading ───────────────────────────────────────────────────────────── */
     function renderReading() {
       const r = lessonData.reading
-      if (!r) return <CenteredCompletion icon="📄" msg={t('No reading today!', 'Tidak ada bacaan hari ini!')} btnLabel={t('Next →', 'Lanjut →')} onNext={() => { awardXp(30); nextAct() }} />
+      if (!r) return <CenteredCompletion icon="document" msg={t('No reading today!', 'Tidak ada bacaan hari ini!')} btnLabel={t('Next →', 'Lanjut →')} onNext={() => { awardXp(30); nextAct() }} />
 
       // Passage (qIdx === 0)
       if (qIdx === 0) {
@@ -791,11 +790,13 @@ export default function FluentEdge() {
       if (qIdx >= 2 || !prompts[qIdx]) {
         return (
           <div style={{ textAlign: 'center', padding: 32 }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>🎉</div>
+            <div style={{ width: 64, height: 64, borderRadius: '50%', background: C.successBg, border: `2px solid ${C.accent}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+              <Icon name="check" size={28} color={C.accent} strokeWidth={2} />
+            </div>
             <h3 style={{ fontFamily: FR, fontSize: 24, fontWeight: 800, color: C.text, marginBottom: 12 }}>{t("You're done!", 'Kamu selesai!')}</h3>
             <p style={{ fontFamily: PJ, fontSize: 14, color: C.textSec, marginBottom: 28, lineHeight: 1.6 }}>{t('Speaking practice complete. Amazing work today.', 'Latihan berbicara selesai. Kerja keras yang luar biasa!')}</p>
             <button onClick={() => { awardXp(20); finishLesson() }}
-              style={{ background: C.gold, color: '#0A0A0F', border: 'none', borderRadius: 14, padding: '16px 32px', fontSize: 16, fontWeight: 800, fontFamily: PJ, cursor: 'pointer', boxShadow: `0 0 28px ${C.goldGlow}` }}>
+              style={{ background: C.gold, color: '#1A1816', border: 'none', borderRadius: 14, padding: '16px 32px', fontSize: 16, fontWeight: 800, fontFamily: PJ, cursor: 'pointer', boxShadow: `0 2px 16px ${C.goldGlow}` }}>
               {t('Complete Lesson →', 'Selesaikan Pelajaran →')}
             </button>
           </div>
@@ -810,8 +811,10 @@ export default function FluentEdge() {
           <p style={{ fontFamily: PJ, fontSize: 12, color: C.textMuted, textAlign: 'center', marginBottom: 20 }}>
             {t(`Prompt ${qIdx + 1} of 2`, `Prompt ${qIdx + 1} dari 2`)}
           </p>
-          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, padding: 28, marginBottom: 20, textAlign: 'center' }}>
-            <div style={{ fontSize: 40, marginBottom: 16 }}>🎙️</div>
+          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 28, marginBottom: 20, textAlign: 'center' }}>
+            <div style={{ width: 40, height: 40, borderRadius: 10, background: C.elevated, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+              <Icon name="microphone" size={20} color={C.accent} />
+            </div>
             <p style={{ fontFamily: FR, fontSize: 19, fontWeight: 700, color: C.text, lineHeight: 1.55 }}>"{prompt}"</p>
           </div>
           <div style={{ background: C.elevated, borderRadius: 14, padding: '14px 18px', marginBottom: 20 }}>
@@ -822,8 +825,8 @@ export default function FluentEdge() {
           </div>
           <div style={{ display: 'flex', gap: 10 }}>
             <button onClick={() => speak(enPrompt)}
-              style={{ flex: 1, background: C.elevated, color: C.text, border: `1px solid ${C.border}`, borderRadius: 14, padding: '14px', fontSize: 14, fontWeight: 600, fontFamily: PJ, cursor: 'pointer' }}>
-              🔊 {t('Listen', 'Dengar')}
+              style={{ flex: 1, background: C.elevated, color: C.text, border: `1px solid ${C.border}`, borderRadius: 12, padding: '14px', fontSize: 14, fontWeight: 600, fontFamily: PJ, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <Icon name="speaker" size={15} color={C.textSec} /> {t('Listen', 'Dengar')}
             </button>
             <button onClick={() => { awardXp(10); setQIdx(i => i + 1) }}
               style={{ flex: 2, background: C.accent, color: '#fff', border: 'none', borderRadius: 14, padding: '14px', fontSize: 15, fontWeight: 700, fontFamily: PJ, cursor: 'pointer', boxShadow: `0 0 20px ${C.accentGlow}` }}>
@@ -860,12 +863,13 @@ export default function FluentEdge() {
                   <div key={i} style={{ flex: 1, height: 4, borderRadius: 2, background: i <= actIdx ? C.accent : C.border, transition: 'background 0.4s' }} />
                 ))}
               </div>
-              <div style={{ fontFamily: PJ, fontSize: 12, color: C.textMuted }}>
-                {ACT_ICONS[actIdx]} {ACT_LABELS[actIdx]}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Icon name={ACT_ICONS[actIdx]} size={13} color={C.textMuted} />
+                <span style={{ fontFamily: PJ, fontSize: 12, color: C.textMuted }}>{ACT_LABELS[actIdx]}</span>
               </div>
             </div>
             <div style={{ fontFamily: FR, fontSize: 15, fontWeight: 800, color: C.gold }}>
-              ⚡ +{lessonXp}
+              +{lessonXp} XP
             </div>
           </div>
 
@@ -881,9 +885,11 @@ export default function FluentEdge() {
   if (screen === 'lesson-done') return (
     <Shell lang={lang} setLang={setLang}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '48px 24px', textAlign: 'center' }}>
-        <div style={{ fontSize: 72, marginBottom: 24 }}>🎉</div>
+        <div style={{ width: 64, height: 64, borderRadius: 16, background: C.elevated, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}>
+          <Icon name="check" size={28} color={C.accent} strokeWidth={2} />
+        </div>
         <h1 style={{ fontFamily: FR, fontSize: 38, fontWeight: 900, color: C.text, marginBottom: 12 }}>
-          {t('Lesson Complete!', 'Pelajaran Selesai!')}
+          {t('Lesson Complete', 'Pelajaran Selesai')}
         </h1>
         <p style={{ fontFamily: PJ, fontSize: 15, color: C.textSec, marginBottom: 44, maxWidth: 280, lineHeight: 1.6 }}>
           {t("You're building something real. Keep the streak alive.", 'Kamu sedang membangun sesuatu yang nyata. Pertahankan streakmu.')}
@@ -891,14 +897,13 @@ export default function FluentEdge() {
 
         <div style={{ display: 'flex', gap: 14, marginBottom: 44, width: '100%', maxWidth: 360 }}>
           {[
-            { icon: '⚡', val: `+${lessonXp}`, label: 'XP' },
-            { icon: '🔥', val: streak,          label: t('Day Streak', 'Hari Berturut') },
-            { icon: '📅', val: completedDays.length, label: t('Days Done', 'Hari Selesai') },
+            { val: `+${lessonXp}`, label: 'XP earned' },
+            { val: streak,          label: t('Day streak', 'Hari berturut') },
+            { val: completedDays.length, label: t('Days done', 'Hari selesai') },
           ].map(s => (
-            <div key={s.label} style={{ flex: 1, background: C.card, border: `1px solid ${C.border}`, borderRadius: 18, padding: '18px 10px', textAlign: 'center' }}>
-              <div style={{ fontSize: 26 }}>{s.icon}</div>
-              <div style={{ fontFamily: FR, fontSize: 24, fontWeight: 800, color: C.gold, marginTop: 6 }}>{s.val}</div>
-              <div style={{ fontFamily: PJ, fontSize: 11, color: C.textMuted, marginTop: 4 }}>{s.label}</div>
+            <div key={s.label} style={{ flex: 1, background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: '18px 10px', textAlign: 'center' }}>
+              <div style={{ fontFamily: FR, fontSize: 26, fontWeight: 800, color: C.accent }}>{s.val}</div>
+              <div style={{ fontFamily: PJ, fontSize: 10, fontWeight: 600, color: C.textMuted, marginTop: 6, textTransform: 'uppercase', letterSpacing: '0.07em' }}>{s.label}</div>
             </div>
           ))}
         </div>
@@ -931,22 +936,22 @@ function Shell({ children, lang, setLang, noLangToggle }) {
         <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,800;9..144,900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
         <style>{`
           *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-          body { background: #0A0A0F; color: #F1F0EE; -webkit-font-smoothing: antialiased; }
+          body { background: #F7F4EF; color: #1A1816; -webkit-font-smoothing: antialiased; }
           @keyframes spin { to { transform: rotate(360deg); } }
           @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-          input:focus { border-color: #6366F1 !important; box-shadow: 0 0 0 3px rgba(99,102,241,0.12) !important; }
+          input:focus { border-color: #2D5016 !important; box-shadow: 0 0 0 3px rgba(45,80,22,0.1) !important; }
           button:active { transform: scale(0.96) !important; }
           ::-webkit-scrollbar { width: 4px; }
-          ::-webkit-scrollbar-track { background: #0A0A0F; }
-          ::-webkit-scrollbar-thumb { background: #2A2A38; border-radius: 2px; }
+          ::-webkit-scrollbar-track { background: #F7F4EF; }
+          ::-webkit-scrollbar-thumb { background: #D8D2C8; border-radius: 2px; }
         `}</style>
       </Head>
-      <div style={{ background: '#0A0A0F', minHeight: '100vh' }}>
+      <div style={{ background: '#F7F4EF', minHeight: '100vh' }}>
         {!noLangToggle && (
           <div style={{ position: 'fixed', top: 16, right: 16, zIndex: 200 }}>
             <button
               onClick={() => setLang(l => l === 'en' ? 'id' : 'en')}
-              style={{ background: '#1C1C24', border: '1px solid #2A2A38', borderRadius: 20, padding: '6px 14px', fontSize: 12, fontWeight: 700, color: '#94A3B8', cursor: 'pointer', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+              style={{ background: '#EDE9E3', border: '1px solid #D8D2C8', borderRadius: 20, padding: '6px 14px', fontSize: 12, fontWeight: 700, color: '#6B6560', cursor: 'pointer', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
               {lang === 'en' ? '🇮🇩 ID' : '🇬🇧 EN'}
             </button>
           </div>
@@ -962,11 +967,11 @@ function SurveyLayout({ step, total, headline, sub, children }) {
     <div style={{ padding: '64px 24px 48px', maxWidth: 420, margin: '0 auto' }}>
       <div style={{ display: 'flex', gap: 6, marginBottom: 36, justifyContent: 'center' }}>
         {Array.from({ length: total }, (_, i) => (
-          <div key={i} style={{ width: i + 1 === step ? 28 : 8, height: 8, borderRadius: 4, background: i + 1 <= step ? '#6366F1' : '#2A2A38', transition: 'all 0.35s ease' }} />
+          <div key={i} style={{ width: i + 1 === step ? 28 : 8, height: 8, borderRadius: 4, background: i + 1 <= step ? '#2D5016' : '#D8D2C8', transition: 'all 0.35s ease' }} />
         ))}
       </div>
-      <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: 28, fontWeight: 900, color: '#F1F0EE', marginBottom: 10, textAlign: 'center', lineHeight: 1.25 }}>{headline}</h1>
-      {sub && <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, color: '#94A3B8', textAlign: 'center', marginBottom: 32, lineHeight: 1.6 }}>{sub}</p>}
+      <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: 28, fontWeight: 900, color: '#1A1816', marginBottom: 10, textAlign: 'center', lineHeight: 1.25 }}>{headline}</h1>
+      {sub && <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, color: '#6B6560', textAlign: 'center', marginBottom: 32, lineHeight: 1.6 }}>{sub}</p>}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>{children}</div>
     </div>
   )
@@ -977,32 +982,34 @@ function SurveyCard({ icon, title, desc, selected, onClick, compact }) {
     <button
       onClick={onClick}
       style={{
-        background: selected ? 'rgba(99,102,241,0.1)' : '#131318',
-        border: `1px solid ${selected ? '#6366F1' : '#2A2A38'}`,
-        borderRadius: 16,
+        background: selected ? 'rgba(45,80,22,0.05)' : '#FFFFFF',
+        border: `1px solid ${selected ? '#2D5016' : '#D8D2C8'}`,
+        borderRadius: 12,
         padding: compact ? '14px 18px' : '18px 20px',
-        display: 'flex', alignItems: compact ? 'center' : 'flex-start', gap: 14,
+        display: 'flex', alignItems: 'center', gap: 16,
         cursor: 'pointer', textAlign: 'left', width: '100%',
         transition: 'all 0.18s ease',
-        boxShadow: selected ? '0 0 20px rgba(99,102,241,0.15)' : 'none',
+        boxShadow: selected ? '0 1px 8px rgba(45,80,22,0.1)' : 'none',
       }}>
-      <span style={{ fontSize: compact ? 22 : 28, flexShrink: 0 }}>{icon}</span>
-      <div style={{ flex: 1 }}>
-        <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: compact ? 15 : 16, fontWeight: 700, color: '#F1F0EE' }}>{title}</div>
-        {desc && <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 13, color: '#94A3B8', marginTop: 3, lineHeight: 1.4 }}>{desc}</div>}
+      <div style={{ width: 38, height: 38, borderRadius: 8, background: selected ? 'rgba(45,80,22,0.1)' : '#EDE9E3', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background 0.2s' }}>
+        <Icon name={icon} size={17} color={selected ? '#2D5016' : '#6B6560'} />
       </div>
-      {selected && <span style={{ color: '#6366F1', fontSize: 20, flexShrink: 0 }}>✓</span>}
+      <div style={{ flex: 1 }}>
+        <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: compact ? 14 : 15, fontWeight: 600, color: '#1A1816', letterSpacing: '-0.01em' }}>{title}</div>
+        {desc && <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 12, color: '#9E9890', marginTop: 2, lineHeight: 1.4 }}>{desc}</div>}
+      </div>
+      <Icon name={selected ? 'check' : 'arrow-right'} size={15} color={selected ? '#2D5016' : '#D8D2C8'} />
     </button>
   )
 }
 
 function MCQQuestion({ question, subtext, options, answer, selected, feedback, lang, onSelect, onNext, progress }) {
   const C2 = {
-    card: '#131318', elevated: '#1C1C24', border: '#2A2A38',
-    accent: '#6366F1', accentGlow: 'rgba(99,102,241,0.15)',
-    success: '#10B981', successBg: 'rgba(16,185,129,0.08)',
-    error: '#F43F5E',   errorBg:   'rgba(244,63,94,0.08)',
-    text: '#F1F0EE', textSec: '#94A3B8', textMuted: '#64748B',
+    card: '#FFFFFF', elevated: '#EDE9E3', border: '#D8D2C8',
+    accent: '#2D5016', accentGlow: 'rgba(45,80,22,0.1)',
+    success: '#2D5016', successBg: 'rgba(45,80,22,0.07)',
+    error: '#8B3030',   errorBg:   'rgba(139,48,48,0.07)',
+    text: '#1A1816', textSec: '#6B6560', textMuted: '#9E9890',
   }
   return (
     <div>
@@ -1056,12 +1063,58 @@ function MCQQuestion({ question, subtext, options, answer, selected, feedback, l
 function CenteredCompletion({ icon, msg, btnLabel, onNext }) {
   return (
     <div style={{ textAlign: 'center', padding: '40px 0' }}>
-      <div style={{ fontSize: 48, marginBottom: 16 }}>{icon}</div>
-      <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 15, color: '#94A3B8', marginBottom: 28, lineHeight: 1.6 }}>{msg}</p>
+      <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(45,80,22,0.07)', border: '2px solid rgba(45,80,22,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+        <Icon name={icon} size={28} color="#2D5016" strokeWidth={1.5} />
+      </div>
+      <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 15, color: '#6B6560', marginBottom: 28, lineHeight: 1.6 }}>{msg}</p>
       <button onClick={onNext}
-        style={{ background: '#6366F1', color: '#fff', border: 'none', borderRadius: 14, padding: '16px 32px', fontSize: 16, fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif", cursor: 'pointer', boxShadow: '0 0 28px rgba(99,102,241,0.15)' }}>
+        style={{ background: '#2D5016', color: '#fff', border: 'none', borderRadius: 14, padding: '16px 32px', fontSize: 16, fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif", cursor: 'pointer', boxShadow: '0 2px 16px rgba(45,80,22,0.2)' }}>
         {btnLabel}
       </button>
     </div>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   ICON COMPONENT — Heroicons 2.0 Outline
+═══════════════════════════════════════════════════════════════════════════════ */
+function Icon({ name, size = 18, color = 'currentColor', strokeWidth = 1.5 }) {
+  const paths = {
+    'briefcase':   'M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 0 0 .75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 0 0-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0 1 12 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 0 1-.673-.38m0 0A2.18 2.18 0 0 1 3 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 0 1 3.413-.387m7.5 0V5.25A2.25 2.25 0 0 0 13.5 3h-3a2.25 2.25 0 0 0-2.25 2.25v.894m7.5 0a48.667 48.667 0 0 0-7.5 0M12 12.75h.008v.008H12v-.008Z',
+    'exchange':    'M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5',
+    'globe':       'M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0 1 21 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0 1 12 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 0 1 3 12c0-1.605.42-3.113 1.157-4.418',
+    'book-open':   'M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25',
+    'chart-start': 'M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941',
+    'chart-mid':   'M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z',
+    'chart-top':   'M4.5 12.75l7.5-7.5 7.5 7.5m-15 6 7.5-7.5 7.5 7.5',
+    'building':    'M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Z',
+    'cube':        'M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9',
+    'chart-bar':   'M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z',
+    'cpu':         'M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 0 0 2.25-2.25V6.75a2.25 2.25 0 0 0-2.25-2.25H6.75A2.25 2.25 0 0 0 4.5 6.75v10.5a2.25 2.25 0 0 0 2.25 2.25Zm.75-12h9v9h-9v-9Z',
+    'star':        'M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z',
+    'cross':       'M12 3v18m9-9H3',
+    'hand':        'M10.05 4.575a1.575 1.575 0 1 0-3.15 0v3m3.15-3v-1.5a1.575 1.575 0 0 1 3.15 0v1.5m-3.15 0 .075 5.925m3.075.75V4.575m0 0a1.575 1.575 0 0 1 3.15 0V15M6.9 7.575a1.575 1.575 0 1 0-3.15 0v8.175a6.75 6.75 0 0 0 6.75 6.75h2.018a5.25 5.25 0 0 0 3.712-1.538l1.732-1.732a5.25 5.25 0 0 0 1.538-3.712l.003-2.024a.668.668 0 0 1 .198-.471 1.575 1.575 0 1 0-2.228-2.228 3.818 3.818 0 0 0-1.12 2.687M6.9 7.575V12m6.27 4.318A4.49 4.49 0 0 1 16.35 15m.002 0h-.002',
+    'no-symbol':   'M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636',
+    'check':       'M4.5 12.75l6 6 9-13.5',
+    'arrow-right': 'M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3',
+    'pencil':      'm16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10',
+    'document':    'M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z',
+    'question':    'M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z',
+    'microphone':  'M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z',
+    'speaker':     'M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z',
+    'timer':       'M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
+    'academic':    'M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5',
+    'calendar':    'M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5',
+    'chat':        'M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z',
+    'flag':        'M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5',
+  }
+  const d = paths[name]
+  if (!d) return null
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"
+      style={{ display: 'inline-block', flexShrink: 0 }}>
+      <path d={d} />
+    </svg>
   )
 }
