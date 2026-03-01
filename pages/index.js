@@ -1,1293 +1,744 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Head from 'next/head'
 
-// ─── Questions ───────────────────────────────────────────────────────────────
-const QUESTIONS = [
-  {
-    text: "Apa arti kata 'postponed'?",
-    opts: ['Dibatalkan', 'Ditunda', 'Dijadwalkan', 'Disetujui'],
-    ans: 1,
-  },
-  {
-    text: "The meeting has been _____ to Friday.",
-    opts: ['moved', 'said', 'talked', 'spoken'],
-    ans: 0,
-  },
-  {
-    text: "Which sentence is correct?",
+// ─── Data ─────────────────────────────────────────────────────────────────────
+
+const GOALS = [
+  { id: 'career', icon: '💼', ID: 'Karir & Pekerjaan', EN: 'Career & Work', subID: 'Promosi & gaji lebih besar', subEN: 'Promotions & better salary' },
+  { id: 'business', icon: '🤝', ID: 'Meeting & Bisnis', EN: 'Business Meetings', subID: 'Rapat dan presentasi profesional', subEN: 'Professional meetings & presentations' },
+  { id: 'daily', icon: '💬', ID: 'Percakapan Sehari-hari', EN: 'Daily Conversation', subID: 'Ngobrol lebih lancar dan percaya diri', subEN: 'Speak more fluently & confidently' },
+  { id: 'travel', icon: '✈️', ID: 'Perjalanan & Wisata', EN: 'Travel & Tourism', subID: 'Komunikasi lancar saat bepergian', subEN: 'Communicate when traveling' },
+]
+
+const LEVELS = [
+  { id: 'lower', badge: 'A1–A2', ID: 'Pemula', EN: 'Beginner', subID: 'Saya tahu sedikit kata-kata dasar', subEN: 'I know some basic words', color: '#4CAF50' },
+  { id: 'medium', badge: 'B1–B2', ID: 'Menengah', EN: 'Intermediate', subID: 'Saya bisa berbicara tapi masih banyak kesalahan', subEN: 'I can speak but make many mistakes', color: '#00BFFF' },
+  { id: 'high', badge: 'C1', ID: 'Mahir', EN: 'Advanced', subID: 'Cukup lancar, ingin lebih profesional', subEN: 'Fairly fluent, want to sound more professional', color: '#9B59B6' },
+]
+
+const TIMES = [
+  { id: 5, ID: '5 menit / hari', EN: '5 min / day', subID: 'Santai tapi konsisten', subEN: 'Relaxed but consistent' },
+  { id: 10, ID: '10 menit / hari', EN: '10 min / day', subID: 'Jadwal terbaik untuk pemula', subEN: 'Best schedule for most people', highlight: true },
+  { id: 15, ID: '15 menit / hari', EN: '15 min / day', subID: 'Progres lebih cepat', subEN: 'Faster progress' },
+]
+
+const COMMUNITIES = [
+  { id: 'work', icon: '🏢', ID: 'Komunitas Profesional', EN: 'Professional Community' },
+  { id: 'faith', icon: '⛪', ID: 'Komunitas Gereja / Iman', EN: 'Church / Faith Community' },
+  { id: 'campus', icon: '🎓', ID: 'Komunitas Kampus', EN: 'Campus Community' },
+  { id: 'social', icon: '👥', ID: 'Komunitas Umum', EN: 'General Community' },
+]
+
+const LESSONS = {
+  lower: {
+    word: 'SCHEDULE', phonetic: '/ˈsked.juːl/',
+    meaningID: 'Jadwal / Menjadwalkan', meaningEN: 'A plan of times and events',
+    sentenceEN: 'Can we schedule a meeting for Monday?', sentenceID: 'Bisakah kita jadwalkan meeting hari Senin?',
+    quizQID: 'Apa arti kalimat ini?', quizQEN: 'What does this mean?', quizSentence: '"Can we schedule a call?"',
     opts: [
-      'I have work here since 2020',
-      'I have been working here since 2020',
-      'I am work here since 2020',
-      'I working here since 2020',
+      { ID: 'Bisakah kita batalkan panggilan?', EN: 'Can we cancel the call?' },
+      { ID: 'Bisakah kita jadwalkan panggilan?', EN: 'Can we arrange a call time?' },
+      { ID: 'Bisakah kita rekam panggilan?', EN: 'Can we record the call?' },
+      { ID: 'Bisakah kita lewatkan panggilan?', EN: 'Can we skip the call?' },
     ],
     ans: 1,
+    tipID: 'Di Batam, frase ini sangat umum saat berkoordinasi dengan klien dari Singapore. Coba pakai di WhatsApp atau email profesionalmu besok.',
+    tipEN: 'In Batam, this phrase is common when coordinating with Singapore clients. Try using it in WhatsApp or email tomorrow.',
   },
-  {
-    text: "We need to _____ the terms before signing.",
-    opts: ['negotiate', 'say', 'tell', 'speak'],
+  medium: {
+    word: 'NEGOTIATE', phonetic: '/nɪˈɡoʊ.ʃi.eɪt/',
+    meaningID: 'Bernegosiasi / Merundingkan', meaningEN: 'To discuss to reach an agreement',
+    sentenceEN: 'We need to negotiate the contract terms before Friday.', sentenceID: 'Kita perlu merundingkan syarat kontrak sebelum Jumat.',
+    quizQID: 'Kalimat mana yang paling profesional?', quizQEN: 'Which sentence is most professional?', quizSentence: null,
+    opts: [
+      { ID: '"Your price is too high"', EN: '"Your price is too high"' },
+      { ID: '"Give me a discount please"', EN: '"Give me a discount please"' },
+      { ID: '"Can we negotiate the pricing?"', EN: '"Can we negotiate the pricing?"' },
+      { ID: '"I want it cheaper"', EN: '"I want it cheaper"' },
+    ],
+    ans: 2,
+    tipID: 'Di zona perdagangan bebas Batam, kemampuan negosiasi dalam bahasa Inggris sangat dicari perusahaan joint-venture Indonesia–Singapore.',
+    tipEN: "In Batam's free trade zone, English negotiation skills are the most in-demand at Indonesia–Singapore joint-venture companies.",
+  },
+  high: {
+    word: 'LEVERAGE', phonetic: '/ˈlev.ər.ɪdʒ/',
+    meaningID: 'Memanfaatkan / Keunggulan strategis', meaningEN: 'To use something to maximum advantage',
+    sentenceEN: 'We can leverage our local network to win the Singapore contract.', sentenceID: 'Kita bisa memanfaatkan jaringan lokal untuk memenangkan kontrak Singapore.',
+    quizQID: 'Mana penggunaan "leverage" yang tepat dalam bisnis?', quizQEN: 'Which use of "leverage" is correct in a business context?', quizSentence: null,
+    opts: [
+      { ID: '"We leverage our team\'s expertise"', EN: '"We leverage our team\'s expertise"' },
+      { ID: '"The leverage was too much"', EN: '"The leverage was too much"' },
+      { ID: '"I leveraged to the meeting"', EN: '"I leveraged to the meeting"' },
+      { ID: '"She is a great leverage"', EN: '"She is a great leverage"' },
+    ],
     ans: 0,
+    tipID: '"Leverage" sering muncul di pitch deck dan board meeting antara perusahaan Batam dan investor Singapore.',
+    tipEN: '"Leverage" frequently appears in pitch decks and board meetings between Batam companies and Singapore investors.',
   },
-  {
-    text: "The decision was contingent _____ board approval.",
-    opts: ['on', 'of', 'to', 'with'],
-    ans: 0,
-  },
-]
-
-// ─── Vocabulary Data ──────────────────────────────────────────────────────────
-const VOCAB = [
-  {
-    word: 'NEGOTIATE',
-    phonetic: '/nɪˈɡoʊʃieɪt/',
-    id: 'Bernegosiasi',
-    exEn: '"We need to negotiate the contract terms."',
-    exId: '"Kita perlu bernegosiasi soal syarat kontrak."',
-    chips: ['Negotiation', 'Negotiator', 'Negotiable'],
-  },
-  {
-    word: 'LEVERAGE',
-    phonetic: '/ˈlɛv.ər.ɪdʒ/',
-    id: 'Memanfaatkan / Keunggulan',
-    exEn: '"Use your skills as leverage in the interview."',
-    exId: '"Gunakan keahlianmu sebagai keunggulan di wawancara."',
-    chips: ['Leveraged', 'Over-leveraged', 'Leverage ratio'],
-  },
-  {
-    word: 'AGENDA',
-    phonetic: '/əˈdʒɛn.də/',
-    id: 'Agenda / Rencana rapat',
-    exEn: '"The agenda for today\'s meeting is attached."',
-    exId: '"Agenda rapat hari ini sudah dilampirkan."',
-    chips: ['Set the agenda', 'Hidden agenda', 'Agenda item'],
-  },
-  {
-    word: 'DEADLINE',
-    phonetic: '/ˈdɛd.laɪn/',
-    id: 'Batas waktu',
-    exEn: '"The project deadline is next Monday."',
-    exId: '"Batas waktu proyek adalah Senin depan."',
-    chips: ['Meet the deadline', 'Miss the deadline', 'Tight deadline'],
-  },
-  {
-    word: 'PROPOSAL',
-    phonetic: '/prəˈpoʊ.zəl/',
-    id: 'Proposal / Usulan',
-    exEn: '"Please review the proposal before the meeting."',
-    exId: '"Tolong tinjau proposal sebelum rapat."',
-    chips: ['Submit a proposal', 'Business proposal', 'Counter-proposal'],
-  },
-  {
-    word: 'STAKEHOLDER',
-    phonetic: '/ˈsteɪk.hoʊl.dər/',
-    id: 'Pemangku kepentingan',
-    exEn: '"All stakeholders must be informed of the decision."',
-    exId: '"Semua pemangku kepentingan harus diberitahu keputusan ini."',
-    chips: ['Key stakeholder', 'Stakeholder meeting', 'Stakeholder analysis'],
-  },
-  {
-    word: 'MILESTONE',
-    phonetic: '/ˈmaɪl.stoʊn/',
-    id: 'Pencapaian / Tonggak',
-    exEn: '"We reached a major milestone this quarter."',
-    exId: '"Kami mencapai tonggak besar di kuartal ini."',
-    chips: ['Key milestone', 'Hit a milestone', 'Project milestone'],
-  },
-  {
-    word: 'DELEGATE',
-    phonetic: '/ˈdɛl.ɪ.ɡeɪt/',
-    id: 'Mendelegasikan',
-    exEn: '"A good manager knows when to delegate tasks."',
-    exId: '"Manajer yang baik tahu kapan mendelegasikan tugas."',
-    chips: ['Delegation', 'Delegate to', 'Over-delegate'],
-  },
-]
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-const generateRef = () => 'FLNT-' + Math.random().toString(36).substring(2, 6).toUpperCase()
-
-const scoreToLevel = (score) => {
-  if (score <= 1) return 'Lower (A2)'
-  if (score <= 3) return 'Medium (B1)'
-  return 'High (B2)'
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
-export default function FluentEdge() {
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function speak(text) {
+  if (typeof window === 'undefined') return
+  const u = new SpeechSynthesisUtterance(text)
+  u.lang = 'en-US'; u.rate = 0.82
+  window.speechSynthesis.cancel()
+  window.speechSynthesis.speak(u)
+}
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
+const S = {
+  page: { minHeight: '100vh', background: 'linear-gradient(160deg, #0A0F1E 0%, #0D1526 60%, #0F1A2E 100%)' },
+  wrap: { maxWidth: 480, margin: '0 auto', padding: '80px 22px 60px' },
+  stepLabel: { fontSize: 12, color: '#00BFFF', fontWeight: 800, letterSpacing: 3, marginBottom: 14 },
+  h1: { fontSize: 28, fontWeight: 900, color: '#fff', lineHeight: 1.25, marginBottom: 10 },
+  sub: { fontSize: 15, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, marginBottom: 32 },
+  card: {
+    display: 'flex', alignItems: 'center', gap: 16,
+    padding: '18px 20px', borderRadius: 18,
+    background: 'rgba(255,255,255,0.05)',
+    border: '1.5px solid rgba(255,255,255,0.1)',
+    cursor: 'pointer', textAlign: 'left', width: '100%',
+    transition: 'border-color 0.15s, background 0.15s',
+    marginBottom: 10,
+  },
+  cardActive: { background: 'rgba(0,191,255,0.1)', borderColor: '#00BFFF' },
+  cardLabel: { color: '#fff', fontWeight: 700, fontSize: 16 },
+  cardSub: { color: 'rgba(255,255,255,0.45)', fontSize: 13, marginTop: 2 },
+  btnPrimary: {
+    width: '100%', padding: '19px', borderRadius: 16,
+    background: 'linear-gradient(135deg, #00BFFF, #0088BB)',
+    color: '#fff', fontWeight: 800, fontSize: 17,
+    border: 'none', cursor: 'pointer', letterSpacing: 0.3,
+    boxShadow: '0 8px 32px rgba(0,191,255,0.25)',
+    transition: 'opacity 0.15s',
+  },
+  btnBack: { background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 15, padding: '0 0 20px', display: 'block' },
+  statCard: { flex: 1, background: 'rgba(255,255,255,0.06)', borderRadius: 16, padding: '16px 8px', border: '1px solid rgba(255,255,255,0.08)', textAlign: 'center' },
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
+
+export default function Home() {
+  const [lang, setLang] = useState('ID')
   const [screen, setScreen] = useState('splash')
-  const [lang, setLang] = useState('id')
-  const [testScore, setTestScore] = useState(0)
-  const [testQ, setTestQ] = useState(0)
-  const [selectedAnswer, setSelectedAnswer] = useState(null)
-  const [answered, setAnswered] = useState(false)
-  const [timer, setTimer] = useState(30)
-  const [userName, setUserName] = useState('')
-  const [userLevel, setUserLevel] = useState('')
-  const [userRef, setUserRef] = useState('')
-  const [referralFrom, setReferralFrom] = useState('')
-
-  // register form
-  const [formName, setFormName] = useState('')
-  const [formPhone, setFormPhone] = useState('')
-  const [formCity, setFormCity] = useState('')
-  const [formRefCode, setFormRefCode] = useState('')
-  const [showRefInput, setShowRefInput] = useState(false)
+  const [goal, setGoal] = useState(null)
+  const [level, setLevel] = useState(null)
+  const [dailyTime, setDailyTime] = useState(null)
+  const [community, setCommunity] = useState(null)
+  const [buildPct, setBuildPct] = useState(0)
+  const [lessonStep, setLessonStep] = useState(0) // 0=vocab, 1=quiz, 2=tip
+  const [quizAnswer, setQuizAnswer] = useState(null)
+  const [xp, setXP] = useState(0)
+  const [speaking, setSpeaking] = useState(false)
+  const [name, setName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [refFrom, setRefFrom] = useState('')
+  const [refCode, setRefCode] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [formError, setFormError] = useState('')
+  const [submitError, setSubmitError] = useState('')
+  const [copied, setCopied] = useState(false)
+  const splashTimer = useRef(null)
 
-  // lesson
-  const [vocabIdx, setVocabIdx] = useState(0)
-  const [audioPlaying, setAudioPlaying] = useState(false)
-  const [srsTaps, setSrsTaps] = useState(0)
-  const [showXpFloat, setShowXpFloat] = useState(false)
+  const t = (id, en) => lang === 'ID' ? id : en
+  const ls = LESSONS[level] || LESSONS.medium
 
-  // toast
-  const [toast, setToast] = useState(null)
-  const [toastHiding, setToastHiding] = useState(false)
-  const toastTimer = useRef(null)
-
-  // confetti
-  const [showConfetti, setShowConfetti] = useState(false)
-
-  // analyzing
-  const [analyzeProgress, setAnalyzeProgress] = useState(0)
-
-  const t = (id, en) => lang === 'id' ? id : en
-
-  // ─── Read ?ref= from URL on mount ───
+  // Load lang preference + referral code from URL
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search)
-      const ref = params.get('ref')
-      if (ref) setReferralFrom(ref)
-
-      // restore session
-      const savedName = localStorage.getItem('fe_name')
-      const savedLevel = localStorage.getItem('fe_level')
-      const savedRef = localStorage.getItem('fe_ref')
-      if (savedName && savedLevel && savedRef) {
-        setUserName(savedName)
-        setUserLevel(savedLevel)
-        setUserRef(savedRef)
-      }
-    }
+    const saved = localStorage.getItem('fe_lang')
+    if (saved === 'EN' || saved === 'ID') setLang(saved)
+    const p = new URLSearchParams(window.location.search)
+    if (p.get('ref')) setRefFrom(p.get('ref'))
   }, [])
 
-  // ─── Toast ───
-  const showToast = useCallback((msg) => {
-    if (toastTimer.current) clearTimeout(toastTimer.current)
-    setToast(msg)
-    setToastHiding(false)
-    toastTimer.current = setTimeout(() => {
-      setToastHiding(true)
-      setTimeout(() => setToast(null), 250)
-    }, 2000)
-  }, [])
-
-  // ─── Copy to clipboard ───
-  const copyToClipboard = (text, msg) => {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(text).then(() => showToast(msg || '✓ Copied!'))
-    } else {
-      const ta = document.createElement('textarea')
-      ta.value = text
-      document.body.appendChild(ta)
-      ta.select()
-      document.execCommand('copy')
-      document.body.removeChild(ta)
-      showToast(msg || '✓ Copied!')
-    }
+  const toggleLang = () => {
+    const next = lang === 'ID' ? 'EN' : 'ID'
+    setLang(next)
+    localStorage.setItem('fe_lang', next)
   }
 
-  // ─── Share to WA ───
-  const shareToWA = (ref, level) => {
-    const refCode = ref || userRef
-    const lvl = level || userLevel
-    const text = lang === 'id'
-      ? `Hei! Aku baru tes level bahasa Inggrisku di FluentEdge dan dapat ${lvl}. Coba juga yuk, gratis! 👇 https://fluentedge-three.vercel.app?ref=${refCode}`
-      : `Hey! I tested my English at FluentEdge and got ${lvl}. Try it free! 👇 https://fluentedge-three.vercel.app?ref=${refCode}`
-    window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank')
-  }
-
-  // ─── Splash auto-advance ───
+  // Splash auto-advance
   useEffect(() => {
     if (screen === 'splash') {
-      const t = setTimeout(() => setScreen('welcome'), 2500)
-      return () => clearTimeout(t)
+      splashTimer.current = setTimeout(() => setScreen('goal'), 2800)
+      return () => clearTimeout(splashTimer.current)
     }
   }, [screen])
 
-  // ─── Test timer ───
+  // Building path animation
   useEffect(() => {
-    if (screen !== 'test') return
-    setTimer(30)
-    const interval = setInterval(() => {
-      setTimer((prev) => {
-        if (prev <= 1) return 30 // loop
-        return prev - 1
-      })
-    }, 1000)
-    return () => clearInterval(interval)
-  }, [screen, testQ])
-
-  // ─── Analyzing auto-advance ───
-  useEffect(() => {
-    if (screen !== 'analyzing') return
-    const level = scoreToLevel(testScore)
-    setUserLevel(level)
-    const t = setTimeout(() => {
-      setScreen('results-teaser')
-    }, 2400)
-    return () => clearTimeout(t)
-  }, [screen, testScore])
-
-  // ─── Results confetti ───
-  useEffect(() => {
-    if (screen === 'results') {
-      setShowConfetti(true)
-      const t = setTimeout(() => setShowConfetti(false), 3500)
-      return () => clearTimeout(t)
-    }
+    if (screen !== 'building') return
+    setBuildPct(0)
+    let v = 0
+    const iv = setInterval(() => {
+      v += Math.random() * 18 + 4
+      if (v >= 100) {
+        v = 100; clearInterval(iv)
+        setTimeout(() => { setLessonStep(0); setQuizAnswer(null); setScreen('lesson') }, 700)
+      }
+      setBuildPct(Math.min(v, 100))
+    }, 180)
+    return () => clearInterval(iv)
   }, [screen])
 
-  // ─── navigate to new screen ───
-  const goTo = (s) => {
-    setScreen(s)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-
-  // ─── Test: select answer ───
-  const handleAnswer = (idx) => {
-    if (answered) return
-    setSelectedAnswer(idx)
-    setAnswered(true)
-    if (idx === QUESTIONS[testQ].ans) {
-      setTestScore((s) => s + 1)
-    }
-  }
-
-  // ─── Test: next question ───
-  const handleNextQ = () => {
-    const nextQ = testQ + 1
-    if (nextQ >= QUESTIONS.length) {
-      setSelectedAnswer(null)
-      setAnswered(false)
-      goTo('analyzing')
-    } else {
-      setTestQ(nextQ)
-      setSelectedAnswer(null)
-      setAnswered(false)
-    }
-  }
-
-  // ─── Register submit ───
-  const handleRegister = async () => {
-    setFormError('')
-    if (!formName.trim()) { setFormError(t('Nama wajib diisi', 'Name is required')); return }
-    if (!formPhone.trim()) { setFormError(t('WhatsApp wajib diisi', 'WhatsApp is required')); return }
-    if (!formCity) { setFormError(t('Pilih kota kamu', 'Please select your city')); return }
-
-    setSubmitting(true)
-    const refCode = generateRef()
+  async function handleRegister() {
+    if (!phone.trim()) { setSubmitError(t('Masukkan nomor WhatsApp kamu', 'Enter your WhatsApp number')); return }
+    setSubmitting(true); setSubmitError('')
     try {
       const res = await fetch('/api/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: formName.trim(),
-          whatsapp: '+62' + formPhone.trim(),
-          city: formCity,
-          level: userLevel,
-          score: testScore,
-          referralCode: refCode,
-          referralFrom: referralFrom || formRefCode.trim(),
+          name: name.trim() || t('Pengguna FluentEdge', 'FluentEdge User'),
+          whatsapp: phone.trim(), city: 'Batam',
+          level: level || 'medium', score: xp,
+          referralFrom: refFrom, religion: community, community,
         }),
       })
       const data = await res.json()
-      if (data.success) {
-        const name = formName.trim()
-        const level = data.level || userLevel
-        const ref = data.referralCode || refCode
-        setUserName(name)
-        setUserLevel(level)
-        setUserRef(ref)
-        if (typeof localStorage !== 'undefined') {
-          localStorage.setItem('fe_name', name)
-          localStorage.setItem('fe_level', level)
-          localStorage.setItem('fe_ref', ref)
-        }
-        goTo('results')
-      } else {
-        setFormError(data.error || t('Terjadi kesalahan, coba lagi', 'Something went wrong, try again'))
-      }
-    } catch (e) {
-      setFormError(t('Gagal terhubung ke server', 'Failed to connect to server'))
-    }
-    setSubmitting(false)
+      if (data.referralCode) { setRefCode(data.referralCode); setScreen('success') }
+      else setSubmitError(t('Terjadi kesalahan. Coba lagi.', 'Something went wrong. Please try again.'))
+    } catch { setSubmitError(t('Terjadi kesalahan. Coba lagi.', 'Something went wrong. Please try again.')) }
+    finally { setSubmitting(false) }
   }
 
-  // ─── Lesson SRS ───
-  const handleSRS = () => {
-    const newTaps = srsTaps + 1
-    setSrsTaps(newTaps)
-    if (newTaps === 3) {
-      setShowXpFloat(true)
-      setTimeout(() => setShowXpFloat(false), 1500)
-    }
-    if (vocabIdx < VOCAB.length - 1) {
-      setVocabIdx((i) => i + 1)
-    } else {
-      setVocabIdx(0)
-      setSrsTaps(0)
-      showToast(t('🎉 Lesson selesai! +30 XP', '🎉 Lesson done! +30 XP'))
-    }
+  function copyCode(text) {
+    navigator.clipboard?.writeText(text).catch(() => {})
+    setCopied(true); setTimeout(() => setCopied(false), 2000)
   }
 
-  // ─── WA share message ───
-  const waMsg = `${t('Hei! Aku baru tes level bahasa Inggrisku di FluentEdge dan dapat', "Hey! I tested my English at FluentEdge and got")} ${userLevel}. ${t('Coba juga yuk, gratis!', 'Try it free!')} 👇 https://fluentedge-three.vercel.app?ref=${userRef}`
+  const waLink = (code) => `https://wa.me/?text=${encodeURIComponent(t(
+    `Hei! Aku lagi pakai FluentEdge buat belajar bahasa Inggris. Gratis & bagus banget! Coba juga yuk 👉 https://fluentedge-three.vercel.app${code ? '?ref=' + code : ''}`,
+    `Hey! I'm using FluentEdge to improve my English. It's free and amazing! Join me 👉 https://fluentedge-three.vercel.app${code ? '?ref=' + code : ''}`
+  ))}`
 
-  const BOTTOM_NAV_SCREENS = ['dashboard', 'lesson', 'speaking', 'referral']
-  const showBottomNav = BOTTOM_NAV_SCREENS.includes(screen)
+  // ─── Screens ────────────────────────────────────────────────────────────────
 
-  // ─── Level display helper ───
-  const levelColor = userLevel.includes('High') ? '#FFD700' : userLevel.includes('Medium') ? '#00BFFF' : '#9B59B6'
-  const levelEmoji = userLevel.includes('High') ? '🏆' : userLevel.includes('Medium') ? '⭐' : '🌱'
-
-  // ──────────────────────────────────────────────────────────────────────────
-  // ─── RENDER ───────────────────────────────────────────────────────────────
-  // ──────────────────────────────────────────────────────────────────────────
-
-  const renderScreen = () => {
-    // ─────────────── SPLASH ───────────────────────────────────────────────
-    if (screen === 'splash') {
-      const letters = 'FluentEdge'.split('')
-      return (
-        <div className="screen-enter" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '24px' }}>
-          <div style={{ marginBottom: '24px' }}>
-            {'FluentEdge'.split('').map((ch, i) => (
-              <span
-                key={i}
-                className="logo-letter"
-                style={{
-                  fontSize: '42px',
-                  fontWeight: '800',
-                  background: ch === 'F' || ch === 'E' ? 'linear-gradient(135deg, #00BFFF, #9B59B6)' : 'linear-gradient(135deg, #ffffff, rgba(255,255,255,0.7))',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  animationDelay: `${i * 0.07}s`,
-                }}
-              >
-                {ch}
-              </span>
-            ))}
+  function Splash() {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: 32, textAlign: 'center' }}>
+        <div style={{ marginBottom: 32 }}>
+          <div style={{ fontSize: 56, fontWeight: 900, letterSpacing: -1, background: 'linear-gradient(135deg, #fff 0%, #00BFFF 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: 4 }}>
+            FluentEdge
           </div>
-          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '16px', textAlign: 'center', marginBottom: '48px' }}>
-            {t('Kuasai Bahasa Inggris Bisnis', 'Master Business English')}
+          <div style={{ width: 60, height: 3, background: 'linear-gradient(90deg, #00BFFF, #9B59B6)', borderRadius: 2, margin: '0 auto 20px' }} />
+          <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 18, lineHeight: 1.6 }}>
+            {t('Kuasai bahasa Inggris profesional.', 'Master professional English.')}<br />
+            <span style={{ color: '#00BFFF', fontWeight: 700 }}>{t('Dibuat untuk kamu di Batam.', 'Built for you in Batam.')}</span>
           </p>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <div className="dot-pulse" />
-            <div className="dot-pulse" />
-            <div className="dot-pulse" />
-          </div>
         </div>
-      )
-    }
+        <div style={{ display: 'flex', gap: 8 }}>
+          {[0, 1, 2].map(i => <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: i === 0 ? '#00BFFF' : 'rgba(255,255,255,0.25)', transition: 'background 0.5s' }} />)}
+        </div>
+        <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: 13, marginTop: 40 }}>{t('Memuat...', 'Loading...')}</p>
+      </div>
+    )
+  }
 
-    // ─────────────── WELCOME ──────────────────────────────────────────────
-    if (screen === 'welcome') {
-      return (
-        <div className="screen-enter" style={{ padding: '24px', paddingTop: '64px', paddingBottom: '40px' }}>
-          {/* Hero */}
-          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🎯</div>
-            <h1 style={{ fontSize: '28px', fontWeight: '800', lineHeight: 1.2, marginBottom: '12px' }}>
-              {t(
-                <>Raih Kariermu dengan<br /><span style={{ color: '#00BFFF' }}>Bahasa Inggris</span></>,
-                <>Advance Your Career<br /><span style={{ color: '#00BFFF' }}>with English</span></>
-              )}
-            </h1>
-            <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '15px', lineHeight: 1.5 }}>
-              {t(
-                'Program belajar 6 bulan yang dirancang untuk profesional Batam',
-                '6-month learning program designed for professionals'
-              )}
-            </p>
-          </div>
-
-          {/* Value props */}
-          <div style={{ marginBottom: '28px' }}>
-            {[
-              { icon: '🧪', title: t('Tes Level Sekarang', 'Test Your Level Now'), desc: t('Ketahui level bahasa Inggrismu dalam 5 menit', 'Know your English level in 5 minutes') },
-              { icon: '📚', title: t('Kurikulum Bisnis', 'Business Curriculum'), desc: t('Vocabulary, grammar, dan speaking khusus untuk kerja', 'Vocabulary, grammar & speaking for work') },
-              { icon: '🎁', title: t('Belajar + Dapat Hadiah', 'Learn + Earn Rewards'), desc: t('Ajak teman dan unlock konten eksklusif gratis', 'Invite friends to unlock exclusive content free') },
-            ].map((v) => (
-              <div key={v.title} className="value-card">
-                <div className="value-icon">{v.icon}</div>
-                <div>
-                  <div className="value-title">{v.title}</div>
-                  <div className="value-desc">{v.desc}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Social proof */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '28px', padding: '14px 16px', background: 'rgba(255,255,255,0.04)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.07)' }}>
-            <div className="avatar-row">
-              {['#FF6B6B','#4ECDC4','#45B7D1','#96CEB4','#FFEAA7'].map((c, i) => (
-                <div key={i} className="avatar-circle" style={{ background: c, fontSize: '12px' }}>
-                  {['😊','👨','👩','🧑','😄'][i]}
-                </div>
-              ))}
-            </div>
+  function Goal() {
+    return (
+      <div style={S.wrap}>
+        <div style={S.stepLabel}>{t('LANGKAH 1 DARI 4', 'STEP 1 OF 4')}</div>
+        <h1 style={S.h1}>{t('Apa tujuanmu belajar bahasa Inggris?', "What's your English goal?")}</h1>
+        <p style={S.sub}>{t('Pilih satu — kami akan sesuaikan perjalanan belajarmu', 'Pick one — we\'ll tailor your journey')}</p>
+        {GOALS.map(g => (
+          <button key={g.id} style={{ ...S.card, ...(goal === g.id ? S.cardActive : {}) }}
+            onClick={() => { setGoal(g.id); setScreen('level') }}>
+            <span style={{ fontSize: 34, flexShrink: 0 }}>{g.icon}</span>
             <div>
-              <div style={{ fontWeight: '700', fontSize: '14px' }}>12,847</div>
-              <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>{t('orang sudah bergabung', 'people joined')}</div>
+              <div style={S.cardLabel}>{g[lang]}</div>
+              <div style={S.cardSub}>{lang === 'ID' ? g.subID : g.subEN}</div>
             </div>
-          </div>
-
-          {/* CTA */}
-          <button className="btn-primary" onClick={() => { setTestScore(0); setTestQ(0); setSelectedAnswer(null); setAnswered(false); goTo('test-intro') }} style={{ marginBottom: '12px' }}>
-            {t('Mulai Tes Gratis →', 'Start Free Test →')}
+            <span style={{ marginLeft: 'auto', color: 'rgba(255,255,255,0.3)', fontSize: 20 }}>›</span>
           </button>
-          <p style={{ textAlign: 'center', fontSize: '13px', color: 'rgba(255,255,255,0.35)' }}>
-            {t('Gratis selamanya • Tanpa kartu kredit', 'Forever free • No credit card')}
-          </p>
-        </div>
-      )
-    }
+        ))}
+      </div>
+    )
+  }
 
-    // ─────────────── TEST INTRO ───────────────────────────────────────────
-    if (screen === 'test-intro') {
-      return (
-        <div className="screen-enter" style={{ padding: '24px', paddingTop: '72px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
-          <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-            <div style={{ fontSize: '72px', marginBottom: '20px' }}>⏱️</div>
-            <h2 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '12px' }}>
-              {t('Tes 5 Menit', '5-Minute Test')}
-            </h2>
-            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '15px', marginBottom: '24px' }}>
-              {t('Ukur kemampuan bahasa Inggris bisnis kamu', 'Measure your business English level')}
-            </p>
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
-              {[
-                t('5 pertanyaan', '5 questions'),
-                t('30 detik/soal', '30 sec/question'),
-                t('Hasil instan', 'Instant results'),
-              ].map((c) => (
-                <span key={c} className="chip">{c}</span>
-              ))}
+  function Level() {
+    return (
+      <div style={S.wrap}>
+        <button style={S.btnBack} onClick={() => setScreen('goal')}>← {t('Kembali', 'Back')}</button>
+        <div style={S.stepLabel}>{t('LANGKAH 2 DARI 4', 'STEP 2 OF 4')}</div>
+        <h1 style={S.h1}>{t('Seberapa lancar bahasa Inggrismu sekarang?', "How's your English right now?")}</h1>
+        <p style={S.sub}>{t('Jujur saja — tidak ada jawaban yang salah', "Be honest — there's no wrong answer")}</p>
+        {LEVELS.map(lv => (
+          <button key={lv.id} style={{ ...S.card, ...(level === lv.id ? { background: `${lv.color}18`, borderColor: lv.color } : {}) }}
+            onClick={() => { setLevel(lv.id); setScreen('time') }}>
+            <div style={{ background: lv.color, borderRadius: 8, padding: '5px 11px', fontSize: 12, fontWeight: 800, color: '#000', flexShrink: 0 }}>{lv.badge}</div>
+            <div>
+              <div style={S.cardLabel}>{lv[lang]}</div>
+              <div style={S.cardSub}>{lang === 'ID' ? lv.subID : lv.subEN}</div>
             </div>
-          </div>
+          </button>
+        ))}
+      </div>
+    )
+  }
 
-          <div style={{ width: '100%', maxWidth: '340px' }}>
-            <button
-              className="btn-primary"
-              onClick={() => { setTestScore(0); setTestQ(0); setSelectedAnswer(null); setAnswered(false); goTo('test') }}
-              style={{ fontSize: '18px', padding: '18px', letterSpacing: '0.5px' }}
-            >
-              {t('MULAI TES', 'START TEST')}
+  function Time() {
+    return (
+      <div style={S.wrap}>
+        <button style={S.btnBack} onClick={() => setScreen('level')}>← {t('Kembali', 'Back')}</button>
+        <div style={S.stepLabel}>{t('LANGKAH 3 DARI 4', 'STEP 3 OF 4')}</div>
+        <h1 style={S.h1}>{t('Berapa lama kamu bisa belajar setiap hari?', 'How much time can you practice daily?')}</h1>
+        <p style={S.sub}>{t('Konsistensi lebih penting dari durasi', 'Consistency beats duration every time')}</p>
+        {TIMES.map(tm => (
+          <button key={tm.id} style={{ ...S.card, ...(dailyTime === tm.id ? S.cardActive : {}), ...(tm.highlight && !dailyTime ? { borderColor: 'rgba(0,191,255,0.4)' } : {}) }}
+            onClick={() => { setDailyTime(tm.id); setScreen('community') }}>
+            <div style={{ width: 52, height: 52, borderRadius: 14, background: 'rgba(0,191,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <span style={{ color: '#00BFFF', fontWeight: 900, fontSize: 20 }}>{tm.id}'</span>
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={S.cardLabel}>{tm[lang]}</span>
+                {tm.highlight && <span style={{ fontSize: 11, background: '#00BFFF', color: '#000', fontWeight: 800, borderRadius: 6, padding: '2px 8px' }}>{t('TERBAIK', 'BEST')}</span>}
+              </div>
+              <div style={S.cardSub}>{lang === 'ID' ? tm.subID : tm.subEN}</div>
+            </div>
+          </button>
+        ))}
+      </div>
+    )
+  }
+
+  function Community() {
+    return (
+      <div style={S.wrap}>
+        <button style={S.btnBack} onClick={() => setScreen('time')}>← {t('Kembali', 'Back')}</button>
+        <div style={S.stepLabel}>{t('LANGKAH 4 DARI 4', 'STEP 4 OF 4')}</div>
+        <h1 style={S.h1}>{t('Kamu aktif di komunitas mana?', 'Which community are you part of?')}</h1>
+        <p style={S.sub}>{t('Kami akan sesuaikan materi belajarmu', "We'll personalize your content around this")}</p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          {COMMUNITIES.map(c => (
+            <button key={c.id}
+              onClick={() => { setCommunity(c.id); setScreen('building') }}
+              style={{ padding: '24px 16px', borderRadius: 18, background: community === c.id ? 'rgba(0,191,255,0.12)' : 'rgba(255,255,255,0.05)', border: `1.5px solid ${community === c.id ? '#00BFFF' : 'rgba(255,255,255,0.1)'}`, cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s' }}>
+              <div style={{ fontSize: 36, marginBottom: 10 }}>{c.icon}</div>
+              <div style={{ color: '#fff', fontWeight: 700, fontSize: 14, lineHeight: 1.4 }}>{c[lang]}</div>
             </button>
-          </div>
-
-          <p style={{ marginTop: '20px', color: 'rgba(255,255,255,0.3)', fontSize: '13px' }}>
-            {t('100% gratis, tanpa daftar dulu', '100% free, no sign-up required yet')}
-          </p>
+          ))}
         </div>
-      )
-    }
+      </div>
+    )
+  }
 
-    // ─────────────── TEST ─────────────────────────────────────────────────
-    if (screen === 'test') {
-      const q = QUESTIONS[testQ]
-      const optLetters = ['A', 'B', 'C', 'D']
+  function Building() {
+    const pct = Math.round(buildPct)
+    const steps = [
+      { threshold: 0, ID: 'Menganalisa tujuanmu...', EN: 'Analyzing your goals...' },
+      { threshold: 30, ID: 'Menyesuaikan level...', EN: 'Calibrating your level...' },
+      { threshold: 60, ID: 'Menyiapkan konten Batam...', EN: 'Preparing Batam content...' },
+      { threshold: 88, ID: '✓ Jalur belajarmu siap!', EN: '✓ Your learning path is ready!' },
+    ]
+    const current = steps.filter(s => pct >= s.threshold).pop()
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: 40, textAlign: 'center' }}>
+        <div style={{ fontSize: 56, marginBottom: 20 }}>✨</div>
+        <h2 style={{ fontSize: 26, fontWeight: 900, color: '#fff', marginBottom: 8 }}>
+          {t('Menyiapkan jalur belajarmu', 'Building your learning path')}
+        </h2>
+        <p style={{ color: '#00BFFF', fontWeight: 600, fontSize: 15, marginBottom: 40, minHeight: 24 }}>{current?.[lang]}</p>
+        <div style={{ width: '100%', maxWidth: 320, background: 'rgba(255,255,255,0.1)', borderRadius: 100, height: 10, overflow: 'hidden', marginBottom: 10 }}>
+          <div style={{ width: `${buildPct}%`, height: '100%', background: 'linear-gradient(90deg, #00BFFF, #9B59B6)', borderRadius: 100, transition: 'width 0.3s ease' }} />
+        </div>
+        <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 14 }}>{pct}%</p>
+        <div style={{ display: 'flex', gap: 28, marginTop: 48 }}>
+          {[
+            { label: { ID: 'Level', EN: 'Level' }, val: LEVELS.find(l => l.id === level)?.[lang] || '—' },
+            { label: { ID: 'Target', EN: 'Goal' }, val: `${dailyTime || 10} ${t('mnt', 'min')}` },
+            { label: { ID: 'Tujuan', EN: 'Focus' }, val: GOALS.find(g => g.id === goal)?.[lang] || '—' },
+          ].map((item, i) => (
+            <div key={i} style={{ textAlign: 'center' }}>
+              <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11, fontWeight: 800, letterSpacing: 1.5, marginBottom: 5 }}>{item.label[lang].toUpperCase()}</div>
+              <div style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>{item.val}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  function Lesson() {
+    // Step 0 — Vocabulary card
+    if (lessonStep === 0) return (
+      <div style={S.wrap}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
+          <span style={{ background: 'rgba(0,191,255,0.15)', color: '#00BFFF', borderRadius: 8, padding: '4px 12px', fontSize: 12, fontWeight: 800 }}>{t('PELAJARAN 1', 'LESSON 1')}</span>
+          <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13 }}>1 / 3</span>
+        </div>
+        <h2 style={{ fontSize: 22, fontWeight: 800, color: '#fff', marginBottom: 22 }}>{t('Kata Baru Hari Ini', "Today's Word")}</h2>
+
+        {/* Word card */}
+        <div style={{ background: 'linear-gradient(135deg, rgba(0,191,255,0.08), rgba(155,89,182,0.06))', border: '1px solid rgba(0,191,255,0.2)', borderRadius: 22, padding: 28, marginBottom: 18 }}>
+          <div style={{ fontSize: 38, fontWeight: 900, color: '#00BFFF', letterSpacing: 3, marginBottom: 6 }}>{ls.word}</div>
+          <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, marginBottom: 16 }}>{ls.phonetic}</div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: '#fff', marginBottom: 18 }}>{lang === 'ID' ? ls.meaningID : ls.meaningEN}</div>
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 16 }}>
+            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: 800, letterSpacing: 1.5, marginBottom: 10 }}>{t('CONTOH KALIMAT', 'EXAMPLE SENTENCE')}</div>
+            <div style={{ color: '#fff', fontSize: 16, fontStyle: 'italic', lineHeight: 1.6 }}>"{ls.sentenceEN}"</div>
+            <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 14, marginTop: 8 }}>"{ls.sentenceID}"</div>
+          </div>
+        </div>
+
+        {/* Listen button */}
+        <button onClick={() => { speak(ls.word + '. ' + ls.sentenceEN); setSpeaking(true); setTimeout(() => setSpeaking(false), 2500) }}
+          style={{ width: '100%', padding: 16, borderRadius: 14, background: speaking ? 'rgba(0,191,255,0.2)' : 'rgba(255,255,255,0.05)', border: `1.5px solid ${speaking ? '#00BFFF' : 'rgba(255,255,255,0.12)'}`, color: speaking ? '#00BFFF' : 'rgba(255,255,255,0.7)', fontWeight: 700, fontSize: 15, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 22, transition: 'all 0.2s' }}>
+          <span style={{ fontSize: 20 }}>{speaking ? '🔊' : '▶️'}</span>
+          {speaking ? t('Memainkan...', 'Playing...') : t('Dengarkan Pengucapan', 'Listen to Pronunciation')}
+        </button>
+
+        <button style={S.btnPrimary} onClick={() => setLessonStep(1)}>
+          {t('Lanjut ke Quiz →', 'Continue to Quiz →')}
+        </button>
+      </div>
+    )
+
+    // Step 1 — Quiz
+    if (lessonStep === 1) {
+      const answered = quizAnswer !== null
+      const correct = quizAnswer === ls.ans
       return (
-        <div className="screen-enter" style={{ padding: '20px', paddingTop: '60px', paddingBottom: '40px', minHeight: '100vh' }}>
-          {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <div className="test-progress-dots">
-              {QUESTIONS.map((_, i) => (
-                <div key={i} className={`progress-dot ${i < testQ ? 'done' : i === testQ ? 'active' : ''}`} />
-              ))}
-            </div>
-            <div className="timer-circle">{timer}s</div>
+        <div style={S.wrap}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
+            <span style={{ background: 'rgba(0,191,255,0.15)', color: '#00BFFF', borderRadius: 8, padding: '4px 12px', fontSize: 12, fontWeight: 800 }}>{t('PELAJARAN 1', 'LESSON 1')}</span>
+            <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13 }}>2 / 3</span>
           </div>
-
-          {/* Question */}
-          <div style={{ padding: '20px', background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '18px', marginBottom: '20px' }}>
-            <div style={{ fontSize: '12px', color: '#00BFFF', fontWeight: '700', letterSpacing: '1px', marginBottom: '12px', textTransform: 'uppercase' }}>
-              {t('Pertanyaan', 'Question')} {testQ + 1} / {QUESTIONS.length}
+          <h2 style={{ fontSize: 22, fontWeight: 800, color: '#fff', marginBottom: 8 }}>{t('Quiz Cepat', 'Quick Quiz')}</h2>
+          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 15, marginBottom: 22 }}>{lang === 'ID' ? ls.quizQID : ls.quizQEN}</p>
+          {ls.quizSentence && (
+            <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 14, padding: '16px 20px', marginBottom: 22, fontSize: 19, color: '#fff', fontStyle: 'italic', textAlign: 'center' }}>
+              {ls.quizSentence}
             </div>
-            <p style={{ fontSize: '17px', fontWeight: '600', lineHeight: 1.4 }}>{q.text}</p>
-          </div>
-
-          {/* Options */}
-          <div style={{ marginBottom: '20px' }}>
-            {q.opts.map((opt, i) => {
-              let cls = 'answer-option'
+          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
+            {ls.opts.map((opt, i) => {
+              let bg = 'rgba(255,255,255,0.05)', border = 'rgba(255,255,255,0.1)', color = '#fff'
               if (answered) {
-                if (i === q.ans) cls += ' correct'
-                else if (i === selectedAnswer) cls += ' wrong'
-              } else if (i === selectedAnswer) {
-                cls += ' selected'
+                if (i === ls.ans) { bg = 'rgba(76,175,80,0.18)'; border = '#4CAF50'; color = '#4CAF50' }
+                else if (i === quizAnswer) { bg = 'rgba(244,67,54,0.18)'; border = '#F44336'; color = '#F44336' }
               }
               return (
-                <button key={i} className={cls} onClick={() => handleAnswer(i)} disabled={answered}>
-                  <span className="answer-letter" style={answered && i === q.ans ? { background: 'rgba(37,211,102,0.3)', color: '#25D366' } : answered && i === selectedAnswer ? { background: 'rgba(255,71,87,0.3)', color: '#FF4757' } : {}}>
-                    {optLetters[i]}
-                  </span>
-                  {opt}
+                <button key={i} disabled={answered}
+                  onClick={() => { setQuizAnswer(i); if (i === ls.ans) setXP(prev => prev + 50) }}
+                  style={{ padding: '16px 20px', borderRadius: 14, fontSize: 15, fontWeight: 600, background: bg, border: `1.5px solid ${border}`, color, cursor: answered ? 'default' : 'pointer', textAlign: 'left', transition: 'all 0.2s' }}>
+                  {lang === 'ID' ? opt.ID : opt.EN}
                 </button>
               )
             })}
           </div>
-
-          {/* Next button */}
           {answered && (
-            <div className="screen-enter">
-              <button className="btn-primary" onClick={handleNextQ}>
-                {testQ < QUESTIONS.length - 1 ? t('Lanjut →', 'Next →') : t('Lihat Hasilku →', 'See My Results →')}
-              </button>
-            </div>
-          )}
-        </div>
-      )
-    }
-
-    // ─────────────── ANALYZING ───────────────────────────────────────────
-    if (screen === 'analyzing') {
-      return (
-        <div className="screen-enter" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '40px 24px', textAlign: 'center' }}>
-          <div style={{ fontSize: '56px', marginBottom: '24px' }}>🧠</div>
-          <h2 style={{ fontSize: '22px', fontWeight: '700', marginBottom: '8px' }}>
-            {t('Menganalisis hasil...', 'Analyzing results...')}
-          </h2>
-          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '14px', marginBottom: '36px' }}>
-            {t('Menghitung level bahasa Inggrismu', 'Calculating your English level')}
-          </p>
-          <div style={{ width: '100%', maxWidth: '280px' }}>
-            <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: '99px', overflow: 'hidden', height: '6px' }}>
-              <div className="analyzing-bar" />
-            </div>
-          </div>
-          <p style={{ marginTop: '20px', color: 'rgba(255,255,255,0.3)', fontSize: '13px' }}>
-            {t(`Skor: ${testScore}/${QUESTIONS.length}`, `Score: ${testScore}/${QUESTIONS.length}`)}
-          </p>
-        </div>
-      )
-    }
-
-    // ─────────────── RESULTS TEASER ──────────────────────────────────────
-    if (screen === 'results-teaser') {
-      return (
-        <div className="screen-enter" style={{ padding: '24px', paddingTop: '72px', paddingBottom: '40px', minHeight: '100vh' }}>
-          <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-            <div style={{ fontSize: '48px', marginBottom: '12px' }}>🎉</div>
-            <h2 style={{ fontSize: '24px', fontWeight: '800', marginBottom: '8px' }}>
-              {t('Hasilmu Sudah Siap!', 'Your Results Are Ready!')}
-            </h2>
-            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '14px' }}>
-              {t('Daftar gratis untuk melihat hasil lengkapmu', 'Register free to see your full results')}
-            </p>
-          </div>
-
-          {/* Blurred result card */}
-          <div style={{ padding: '24px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', marginBottom: '20px', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ filter: 'blur(8px)', userSelect: 'none', pointerEvents: 'none' }}>
-              <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-                <div style={{ display: 'inline-block', padding: '8px 24px', background: 'rgba(0,191,255,0.15)', border: '2px solid #00BFFF', borderRadius: '99px', fontSize: '18px', fontWeight: '800', color: '#00BFFF', marginBottom: '10px' }}>
-                  ⭐ Medium (B1)
-                </div>
-                <div style={{ fontSize: '15px', color: 'rgba(255,255,255,0.6)' }}>
-                  {t(`Skor: ${testScore}/5`, `Score: ${testScore}/5`)}
-                </div>
-              </div>
-              <div>
-                {[
-                  t('Kamu bisa memahami percakapan bisnis sehari-hari', 'You can understand everyday business conversations'),
-                  t('Kemampuanmu di atas 67% peserta tes', 'Your level is above 67% of test takers'),
-                  t('Rekomendasi: Business Speaking Module', 'Recommendation: Business Speaking Module'),
-                ].map((item, i) => (
-                  <div key={i} className="locked-bullet">
-                    <span style={{ fontSize: '16px' }}>🔒</span>
-                    <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)' }}>{item}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            {/* Lock overlay */}
-            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 5, background: 'rgba(10,15,30,0.3)', backdropFilter: 'blur(2px)' }}>
-              <div style={{ fontSize: '40px', marginBottom: '8px' }}>🔒</div>
-              <p style={{ fontSize: '14px', fontWeight: '700', color: '#fff', textAlign: 'center' }}>
-                {t('Daftar untuk unlock hasil lengkap', 'Register to unlock full results')}
-              </p>
-            </div>
-          </div>
-
-          {/* Social proof */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px', background: 'rgba(37,211,102,0.06)', border: '1px solid rgba(37,211,102,0.15)', borderRadius: '12px', marginBottom: '24px' }}>
-            <span style={{ fontSize: '18px' }}>✅</span>
-            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)' }}>
-              {t('245 orang dari Batam bergabung minggu ini', '245 people joined this week')}
-            </p>
-          </div>
-
-          {/* CTAs */}
-          <button className="btn-primary" onClick={() => goTo('register')} style={{ marginBottom: '14px', fontSize: '16px' }}>
-            {t('Lihat Hasil Lengkapku →', 'See My Full Results →')}
-          </button>
-
-          <div className="divider" style={{ marginBottom: '14px' }}>{t('atau', 'or')}</div>
-
-          <button className="btn-outline" onClick={() => goTo('register')}>
-            {t('🔗 Share ke 1 teman untuk unlock', '🔗 Share to 1 friend to unlock')}
-          </button>
-        </div>
-      )
-    }
-
-    // ─────────────── REGISTER ────────────────────────────────────────────
-    if (screen === 'register') {
-      return (
-        <div className="screen-enter" style={{ padding: '24px', paddingTop: '64px', paddingBottom: '48px', minHeight: '100vh' }}>
-          <button onClick={() => goTo('results-teaser')} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', fontSize: '24px', cursor: 'pointer', marginBottom: '20px', padding: 0 }}>
-            ←
-          </button>
-
-          <div style={{ marginBottom: '28px' }}>
-            <h2 style={{ fontSize: '24px', fontWeight: '800', marginBottom: '8px' }}>
-              {t('Daftar untuk lihat hasil', 'Register to See Results')}
-            </h2>
-            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)' }}>
-              {t('Gratis selamanya. Kami tidak akan spam.', 'Forever free. We will not spam you.')}
-            </p>
-          </div>
-
-          {/* Form */}
-          <div className="form-group">
-            <label className="form-label">{t('Nama Lengkap', 'Full Name')}</label>
-            <input
-              className="form-input"
-              type="text"
-              placeholder={t('Masukkan namamu', 'Enter your name')}
-              value={formName}
-              onChange={(e) => setFormName(e.target.value)}
-              autoComplete="name"
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">WhatsApp</label>
-            <div className="phone-input-wrap">
-              <div className="phone-prefix">🇮🇩 +62</div>
-              <input
-                className="form-input"
-                type="tel"
-                placeholder="8xxxxxxxxx"
-                value={formPhone}
-                onChange={(e) => setFormPhone(e.target.value.replace(/\D/g, ''))}
-                style={{ flex: 1 }}
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">{t('Kota', 'City')}</label>
-            <select
-              className="form-input"
-              value={formCity}
-              onChange={(e) => setFormCity(e.target.value)}
-            >
-              <option value="">{t('-- Pilih Kota --', '-- Select City --')}</option>
-              <option value="Batam">Batam</option>
-              <option value="Tanjung Pinang">Tanjung Pinang</option>
-              <option value="Bintan">Bintan</option>
-              <option value="Karimun">Karimun</option>
-              <option value="Kota lain">{t('Kota lain', 'Other City')}</option>
-            </select>
-          </div>
-
-          {/* Referral code (collapsible) */}
-          <div style={{ marginBottom: '24px' }}>
-            <button
-              onClick={() => setShowRefInput(!showRefInput)}
-              style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: '13px', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '6px', padding: 0 }}
-            >
-              {showRefInput ? '▼' : '▶'} {t('Punya kode referral?', 'Have a referral code?')}
-            </button>
-            {showRefInput && (
-              <div className="screen-enter" style={{ marginTop: '10px' }}>
-                <input
-                  className="form-input"
-                  type="text"
-                  placeholder="FLNT-XXXX"
-                  value={formRefCode}
-                  onChange={(e) => setFormRefCode(e.target.value.toUpperCase())}
-                />
-              </div>
-            )}
-          </div>
-
-          {formError && (
-            <div style={{ padding: '10px 14px', background: 'rgba(255,71,87,0.12)', border: '1px solid rgba(255,71,87,0.3)', borderRadius: '10px', color: '#FF4757', fontSize: '14px', marginBottom: '16px' }}>
-              {formError}
-            </div>
-          )}
-
-          <button
-            className="btn-green"
-            onClick={handleRegister}
-            disabled={submitting}
-            style={{ opacity: submitting ? 0.7 : 1 }}
-          >
-            {submitting
-              ? t('Mendaftar...', 'Registering...')
-              : t('Lihat Hasilku 🔓', 'See My Results 🔓')}
-          </button>
-
-          <p style={{ textAlign: 'center', fontSize: '12px', color: 'rgba(255,255,255,0.25)', marginTop: '16px', lineHeight: 1.5 }}>
-            {t(
-              'Dengan mendaftar, kamu setuju untuk dihubungi via WhatsApp.',
-              'By registering, you agree to be contacted via WhatsApp.'
-            )}
-          </p>
-        </div>
-      )
-    }
-
-    // ─────────────── RESULTS ─────────────────────────────────────────────
-    if (screen === 'results') {
-      return (
-        <div className="screen-enter" style={{ padding: '24px', paddingTop: '60px', paddingBottom: '40px', minHeight: '100vh' }}>
-          {/* Confetti */}
-          {showConfetti && (
             <>
-              {Array.from({ length: 30 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="confetti-piece"
-                  style={{
-                    left: `${Math.random() * 100}%`,
-                    top: `${Math.random() * 20}%`,
-                    background: ['#00BFFF','#FFD700','#25D366','#9B59B6','#FF6B35'][i % 5],
-                    '--dur': `${2 + Math.random() * 2}s`,
-                    '--delay': `${Math.random() * 0.8}s`,
-                    borderRadius: Math.random() > 0.5 ? '50%' : '2px',
-                    width: `${6 + Math.random() * 6}px`,
-                    height: `${6 + Math.random() * 6}px`,
-                  }}
-                />
-              ))}
+              <div style={{ padding: 16, borderRadius: 14, background: correct ? 'rgba(76,175,80,0.1)' : 'rgba(244,67,54,0.1)', border: `1px solid ${correct ? '#4CAF50' : '#F44336'}`, marginBottom: 18 }}>
+                <div style={{ color: correct ? '#4CAF50' : '#F44336', fontWeight: 800, fontSize: 16, marginBottom: correct ? 0 : 6 }}>
+                  {correct ? t('✓ Benar! +50 XP', '✓ Correct! +50 XP') : t('✗ Belum tepat', '✗ Not quite')}
+                </div>
+                {!correct && <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14 }}>{t('Jawaban:', 'Answer:')} <strong style={{ color: '#fff' }}>{lang === 'ID' ? ls.opts[ls.ans].ID : ls.opts[ls.ans].EN}</strong></div>}
+              </div>
+              <button style={S.btnPrimary} onClick={() => setLessonStep(2)}>{t('Lanjut →', 'Continue →')}</button>
             </>
           )}
-
-          {/* Level badge */}
-          <div style={{ textAlign: 'center', marginBottom: '28px', position: 'relative' }}>
-            <div style={{ fontSize: '16px', color: 'rgba(255,255,255,0.5)', marginBottom: '8px' }}>
-              {t('Hasil Tesmu', 'Your Test Result')}
-            </div>
-            <div
-              className="badge-animate"
-              style={{
-                display: 'inline-block',
-                padding: '16px 32px',
-                background: `linear-gradient(135deg, ${levelColor}22, ${levelColor}11)`,
-                border: `2px solid ${levelColor}`,
-                borderRadius: '16px',
-                marginBottom: '16px',
-                boxShadow: `0 0 40px ${levelColor}40`,
-              }}
-            >
-              <div style={{ fontSize: '32px', marginBottom: '6px' }}>{levelEmoji}</div>
-              <div style={{ fontSize: '24px', fontWeight: '800', color: levelColor }}>
-                {userLevel}
-              </div>
-              <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>
-                {t(`Skor ${testScore}/5`, `Score ${testScore}/5`)}
-              </div>
-            </div>
-
-            {/* XP float */}
-            {showConfetti && (
-              <div className="xp-float" style={{ position: 'absolute', top: '0', left: '50%', transform: 'translateX(-50%)', color: '#FFD700', fontWeight: '800', fontSize: '20px', whiteSpace: 'nowrap' }}>
-                +50 XP ⚡
-              </div>
-            )}
-          </div>
-
-          {/* 6-month roadmap */}
-          <div style={{ marginBottom: '24px' }}>
-            <div className="section-title">{t('ROADMAP 6 BULAN', '6-MONTH ROADMAP')}</div>
-            {[
-              { month: t('Bulan 1-2', 'Month 1-2'), title: t('Fondasi Bisnis', 'Business Foundation'), desc: t('Vocabulary & Grammar dasar', 'Core Vocabulary & Grammar'), done: true },
-              { month: t('Bulan 3-4', 'Month 3-4'), title: t('Komunikasi Aktif', 'Active Communication'), desc: t('Speaking & Email writing', 'Speaking & Email Writing'), done: false },
-              { month: t('Bulan 5-6', 'Month 5-6'), title: t('Level Profesional', 'Professional Level'), desc: t('Presentation & Negotiation', 'Presentation & Negotiation'), done: false },
-            ].map((m, i) => (
-              <div key={i} style={{ display: 'flex', gap: '14px', marginBottom: '14px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: m.done ? 'linear-gradient(135deg, #00BFFF, #0080FF)' : 'rgba(255,255,255,0.1)', border: m.done ? '2px solid #00BFFF' : '2px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '700', color: m.done ? '#fff' : 'rgba(255,255,255,0.3)', flexShrink: 0 }}>
-                    {i + 1}
-                  </div>
-                  {i < 2 && <div style={{ width: '2px', flex: 1, background: 'rgba(255,255,255,0.08)', marginTop: '4px', minHeight: '20px' }} />}
-                </div>
-                <div style={{ padding: '10px 14px', flex: 1, background: m.done ? 'rgba(0,191,255,0.06)' : 'rgba(255,255,255,0.03)', border: `1px solid ${m.done ? 'rgba(0,191,255,0.2)' : 'rgba(255,255,255,0.07)'}`, borderRadius: '12px', marginBottom: i < 2 ? '4px' : 0 }}>
-                  <div style={{ fontSize: '11px', color: m.done ? '#00BFFF' : 'rgba(255,255,255,0.3)', fontWeight: '700', letterSpacing: '0.5px', marginBottom: '2px' }}>{m.month}</div>
-                  <div style={{ fontSize: '14px', fontWeight: '700', marginBottom: '2px' }}>{m.title}</div>
-                  <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>{m.desc}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Share box */}
-          <div style={{ padding: '18px', border: '1.5px solid rgba(37,211,102,0.35)', borderRadius: '16px', background: 'rgba(37,211,102,0.06)', marginBottom: '20px' }}>
-            <div style={{ fontSize: '14px', fontWeight: '700', marginBottom: '10px' }}>
-              🎁 {t('Bagikan hasilmu & unlock bonus lessons!', 'Share your result & unlock bonus lessons!')}
-            </div>
-
-            {/* WA message preview */}
-            <div className="wa-preview" style={{ marginBottom: '14px', fontSize: '12px' }}>
-              {waMsg}
-            </div>
-
-            {/* Referral code */}
-            <div style={{ textAlign: 'center', marginBottom: '12px' }}>
-              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                {t('Kode Referralmu', 'Your Referral Code')}
-              </div>
-              <div style={{ fontSize: '22px', fontWeight: '800', letterSpacing: '4px', color: '#00BFFF', marginBottom: '8px' }}>
-                {userRef}
-              </div>
-              <button className="copy-btn" onClick={() => copyToClipboard(userRef, t('✓ Kode tersalin!', '✓ Code copied!'))}>
-                📋 {t('Salin Kode', 'Copy Code')}
-              </button>
-            </div>
-
-            {/* WA share button */}
-            <button className="wa-share-btn" onClick={() => shareToWA()}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-              {t('Share ke WhatsApp', 'Share to WhatsApp')}
-            </button>
-          </div>
-
-          <button className="btn-primary" onClick={() => goTo('dashboard')}>
-            {t('Mulai Belajar Sekarang →', 'Start Learning Now →')}
-          </button>
         </div>
       )
     }
 
-    // ─────────────── DASHBOARD ───────────────────────────────────────────
-    if (screen === 'dashboard') {
-      return (
-        <div className="screen-enter" style={{ padding: '20px', paddingTop: '60px', paddingBottom: '100px', minHeight: '100vh' }}>
-          {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
-            <div>
-              <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '13px', marginBottom: '4px' }}>
-                {t('Selamat datang! 👋', 'Welcome back! 👋')}
-              </p>
-              <h2 style={{ fontSize: '22px', fontWeight: '800' }}>
-                Halo, {userName || 'Pelajar'}!
-              </h2>
-            </div>
-            <button style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', width: '42px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', cursor: 'pointer', color: '#fff' }}>
-              🔔
-            </button>
-          </div>
+    // Step 2 — Real-world tip
+    return (
+      <div style={S.wrap}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
+          <span style={{ background: 'rgba(0,191,255,0.15)', color: '#00BFFF', borderRadius: 8, padding: '4px 12px', fontSize: 12, fontWeight: 800 }}>{t('PELAJARAN 1', 'LESSON 1')}</span>
+          <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13 }}>3 / 3</span>
+        </div>
+        <h2 style={{ fontSize: 22, fontWeight: 800, color: '#fff', marginBottom: 6 }}>💡 {t('Tips Dunia Nyata', 'Real-World Tip')}</h2>
+        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, marginBottom: 24 }}>{t('Khusus untuk konteks Batam', 'Specifically for Batam')}</p>
 
-          {/* Stat cards */}
-          <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
-            <div className="stat-card">
-              <div className="stat-icon">🔥</div>
-              <div className="stat-value">1 {t('Hari', 'Day')}</div>
-              <div className="stat-label">Streak</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-icon">⚡</div>
-              <div className="stat-value">50 XP</div>
-              <div className="stat-label">{t('Total XP', 'Total XP')}</div>
-            </div>
-            <div className="stat-card" style={{ background: `linear-gradient(135deg, rgba(0,191,255,0.12), rgba(0,191,255,0.06))`, borderColor: 'rgba(0,191,255,0.25)' }}>
-              <div className="stat-icon">📊</div>
-              <div className="stat-value" style={{ color: levelColor, fontSize: '14px' }}>{userLevel.split(' ')[0]}</div>
-              <div className="stat-label">{t('Level', 'Level')}</div>
-            </div>
-          </div>
+        <div style={{ background: 'linear-gradient(135deg, rgba(0,191,255,0.08), rgba(155,89,182,0.08))', border: '1px solid rgba(0,191,255,0.2)', borderRadius: 22, padding: '28px 24px', marginBottom: 22 }}>
+          <div style={{ fontSize: 40, marginBottom: 18 }}>🇮🇩 → 🇸🇬</div>
+          <p style={{ color: '#fff', fontSize: 17, lineHeight: 1.8, fontWeight: 500 }}>{lang === 'ID' ? ls.tipID : ls.tipEN}</p>
+        </div>
 
-          {/* Referral banner */}
-          <div className="gold-banner" style={{ marginBottom: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-              <div>
-                <div style={{ fontSize: '14px', fontWeight: '700', marginBottom: '2px' }}>
-                  🎁 {t('Unlock Konten Bonus', 'Unlock Bonus Content')}
-                </div>
-                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>
-                  0/1 referral
-                </div>
-              </div>
-              <button
-                className="btn-green"
-                onClick={() => goTo('referral')}
-                style={{ width: 'auto', padding: '8px 16px', fontSize: '13px' }}
-              >
-                {t('Invite', 'Invite')}
-              </button>
-            </div>
-            <div className="progress-bar-track">
-              <div className="progress-bar-fill gold" style={{ width: '0%' }} />
-            </div>
-          </div>
-
-          {/* Today's plan */}
-          <div className="section-title">{t("RENCANA HARI INI", "TODAY'S PLAN")}</div>
-
-          <div
-            className="plan-item"
-            onClick={() => goTo('lesson')}
-          >
-            <div className="plan-icon">📚</div>
-            <div className="plan-info">
-              <div className="plan-title">{t('Vocab Lesson 1', 'Vocab Lesson 1')}</div>
-              <div className="plan-sub">{t('8 kata baru · 10 menit', '8 new words · 10 min')}</div>
-            </div>
-            <span className="plan-badge badge-new">{t('Mulai', 'Start')}</span>
-          </div>
-
-          <div className="plan-item locked">
-            <div className="plan-icon">🎤</div>
-            <div className="plan-info">
-              <div className="plan-title">{t('Speaking Practice', 'Speaking Practice')}</div>
-              <div className="plan-sub">🔒 {t('Butuh streak 7 hari', 'Need 7-day streak')}</div>
-            </div>
-            <span className="plan-badge badge-lock">🔒</span>
-          </div>
-
-          <div className="plan-item locked">
-            <div className="plan-icon">💼</div>
-            <div className="plan-info">
-              <div className="plan-title">{t('Business Module', 'Business Module')}</div>
-              <div className="plan-sub">🔒 {t('Butuh 1 referral', 'Need 1 referral')}</div>
-            </div>
-            <span className="plan-badge badge-lock">🔒</span>
+        <div style={{ background: 'rgba(255,215,0,0.07)', border: '1px solid rgba(255,215,0,0.2)', borderRadius: 16, padding: '16px 20px', marginBottom: 26, display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+          <span style={{ fontSize: 28, flexShrink: 0 }}>🎯</span>
+          <div>
+            <div style={{ color: '#FFD700', fontWeight: 800, fontSize: 14, marginBottom: 4 }}>{t('Tantangan Hari Ini', "Today's Challenge")}</div>
+            <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 14, lineHeight: 1.6 }}>{t(`Gunakan kata "${ls.word}" dalam 1 percakapan hari ini`, `Use "${ls.word}" in 1 conversation today`)}</div>
           </div>
         </div>
-      )
-    }
 
-    // ─────────────── LESSON ──────────────────────────────────────────────
-    if (screen === 'lesson') {
-      const vocab = VOCAB[vocabIdx]
-      return (
-        <div className="screen-enter" style={{ padding: '20px', paddingTop: '16px', paddingBottom: '110px', minHeight: '100vh' }}>
-          {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', paddingTop: '8px' }}>
-            <button onClick={() => goTo('dashboard')} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', width: '38px', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff', fontSize: '18px' }}>
-              ←
-            </button>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '2px' }}>Vocabulary · Lesson 1</div>
-              <div style={{ fontSize: '14px', fontWeight: '700' }}>{t(`Kata ${vocabIdx + 1} dari ${VOCAB.length}`, `Word ${vocabIdx + 1} of ${VOCAB.length}`)}</div>
+        <button style={S.btnPrimary} onClick={() => setScreen('lesson-done')}>{t('Selesaikan Pelajaran →', 'Complete Lesson →')}</button>
+      </div>
+    )
+  }
+
+  function LessonDone() {
+    return (
+      <div style={{ ...S.wrap, textAlign: 'center' }}>
+        <div style={{ fontSize: 72, marginBottom: 12 }}>🎉</div>
+        <h1 style={{ ...S.h1, textAlign: 'center' }}>{t('Pelajaran 1 Selesai!', 'Lesson 1 Complete!')}</h1>
+        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 15, marginBottom: 32 }}>{t('Kamu baru saja memulai perjalananmu.', "You've started your journey.")}</p>
+
+        <div style={{ display: 'flex', gap: 12, marginBottom: 32 }}>
+          {[
+            { icon: '⚡', label: 'XP', val: '+50', color: '#FFD700' },
+            { icon: '🔥', label: t('Streak', 'Streak'), val: `${t('Hari', 'Day')} 1`, color: '#FF6B35' },
+            { icon: '📚', label: t('Kata baru', 'New words'), val: '1', color: '#00BFFF' },
+          ].map((s, i) => (
+            <div key={i} style={S.statCard}>
+              <div style={{ fontSize: 24, marginBottom: 6 }}>{s.icon}</div>
+              <div style={{ color: s.color, fontWeight: 900, fontSize: 20 }}>{s.val}</div>
+              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>{s.label}</div>
             </div>
-            <div style={{ background: 'rgba(255,215,0,0.15)', border: '1px solid rgba(255,215,0,0.3)', borderRadius: '99px', padding: '4px 10px', fontSize: '12px', fontWeight: '700', color: '#FFD700' }}>
-              +10 XP
-            </div>
+          ))}
+        </div>
+
+        {/* Locked next lesson */}
+        <div style={{ position: 'relative', overflow: 'hidden', borderRadius: 16, marginBottom: 28, border: '1px solid rgba(255,255,255,0.07)' }}>
+          <div style={{ padding: '18px 20px', background: 'rgba(255,255,255,0.04)', filter: 'blur(2px)' }}>
+            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, marginBottom: 6 }}>{t('PELAJARAN 2', 'LESSON 2')}</div>
+            <div style={{ color: '#fff', fontWeight: 700, fontSize: 17 }}>DELEGATE</div>
+            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>{t('Mendelegasikan tugas dengan efektif', 'Delegating tasks effectively')}</div>
           </div>
-
-          {/* Progress bar */}
-          <div className="progress-bar-track" style={{ marginBottom: '24px' }}>
-            <div className="progress-bar-fill" style={{ width: `${((vocabIdx) / VOCAB.length) * 100}%` }} />
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(10,15,30,0.6)', backdropFilter: 'blur(2px)' }}>
+            <div style={{ fontSize: 28, marginBottom: 6 }}>🔒</div>
+            <div style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>{t('Simpan progress untuk membuka', 'Save progress to unlock')}</div>
           </div>
+        </div>
 
-          {/* Word card */}
-          <div className="word-card" style={{ marginBottom: '20px', position: 'relative' }}>
-            {showXpFloat && (
-              <div className="xp-float" style={{ position: 'absolute', top: '-16px', left: '50%', transform: 'translateX(-50%)', color: '#FFD700', fontWeight: '800', fontSize: '18px', whiteSpace: 'nowrap', zIndex: 10 }}>
-                +30 XP earned ⚡
-              </div>
-            )}
-            <div className="word-english">{vocab.word}</div>
-            <div className="word-phonetic">{vocab.phonetic}</div>
-            <div className="word-id">{vocab.id}</div>
+        <button style={{ ...S.btnPrimary, marginBottom: 12 }} onClick={() => setScreen('register')}>
+          {t('💾 Simpan Progress dengan WhatsApp', '💾 Save Progress with WhatsApp')}
+        </button>
+        <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13 }}>{t('Gratis. Tidak perlu password.', 'Free. No password needed.')}</p>
+      </div>
+    )
+  }
 
-            <button
-              className={`audio-btn ${audioPlaying ? 'playing' : ''}`}
-              onClick={() => { setAudioPlaying(true); setTimeout(() => setAudioPlaying(false), 2000) }}
-              title={t('Putar audio', 'Play audio')}
-            >
-              {audioPlaying ? '🔊' : '🔈'}
-            </button>
-
-            <div style={{ height: '1px', background: 'rgba(255,255,255,0.06)', margin: '0 0 16px' }} />
-
-            <div className="example-en">{vocab.exEn}</div>
-            <div className="example-id" style={{ marginBottom: '16px' }}>{vocab.exId}</div>
-
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
-              {vocab.chips.map((c) => (
-                <span key={c} className="chip" style={{ fontSize: '11px' }}>{c}</span>
-              ))}
-            </div>
-          </div>
-
-          {/* SRS buttons */}
-          <div className="srs-btns">
-            <button className="srs-dontknow" onClick={handleSRS}>
-              ✗ {t('Belum', "Don't Know")}
-            </button>
-            <button className="srs-know" onClick={handleSRS}>
-              ✓ {t('Tahu', 'Know It')}
-            </button>
-          </div>
-
-          <p style={{ textAlign: 'center', marginTop: '14px', fontSize: '12px', color: 'rgba(255,255,255,0.25)' }}>
-            {t('Ketuk untuk lanjut ke kata berikutnya', 'Tap to go to the next word')}
+  function Register() {
+    return (
+      <div style={S.wrap}>
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>📱</div>
+          <h1 style={{ ...S.h1, textAlign: 'center' }}>{t('Simpan Progressmu', 'Save Your Progress')}</h1>
+          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 15, lineHeight: 1.7 }}>
+            {t('Masukkan nomor WhatsApp untuk menyimpan streak dan membuka pelajaran berikutnya.', 'Enter your WhatsApp number to save your streak and unlock the next lessons.')}
           </p>
         </div>
-      )
-    }
 
-    // ─────────────── SPEAKING ─────────────────────────────────────────────
-    if (screen === 'speaking') {
-      return (
-        <div className="screen-enter" style={{ padding: '20px', paddingTop: '60px', paddingBottom: '110px', minHeight: '100vh' }}>
-          <div style={{ marginBottom: '24px' }}>
-            <h2 style={{ fontSize: '22px', fontWeight: '800', marginBottom: '6px' }}>
-              🎤 {t('Speaking Practice', 'Speaking Practice')}
-            </h2>
-            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.45)' }}>
-              {t('Latih kemampuan bicara bahasa Inggrismu', 'Practice your English speaking skills')}
-            </p>
-          </div>
-
-          {/* Lock overlay */}
-          <div style={{ position: 'relative', borderRadius: '20px', overflow: 'hidden' }}>
-            <div style={{ padding: '32px 24px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '20px', filter: 'blur(4px)', userSelect: 'none', pointerEvents: 'none' }}>
-              <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-                <div style={{ fontSize: '48px', marginBottom: '12px' }}>🎙️</div>
-                <div style={{ fontSize: '16px', fontWeight: '700' }}>Pronunciation Coach</div>
-              </div>
-              {['Record yourself speaking', 'Get AI pronunciation score', 'Practice with native phrases'].map((item, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <span>✓</span>
-                  <span style={{ fontSize: '14px' }}>{item}</span>
-                </div>
-              ))}
+        {/* Progress recap */}
+        <div style={{ display: 'flex', gap: 0, background: 'rgba(255,255,255,0.05)', borderRadius: 16, padding: '16px', marginBottom: 28, justifyContent: 'space-around' }}>
+          {[
+            { val: '1', label: t('Pelajaran', 'Lesson') },
+            { val: '50', label: 'XP' },
+            { val: '🔥 1', label: t('Hari streak', 'Day streak') },
+          ].map((s, i) => (
+            <div key={i} style={{ textAlign: 'center' }}>
+              <div style={{ color: '#00BFFF', fontWeight: 900, fontSize: 22 }}>{s.val}</div>
+              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, marginTop: 3 }}>{s.label}</div>
             </div>
-
-            {/* Lock panel */}
-            <div style={{ position: 'absolute', inset: 0, background: 'rgba(10,15,30,0.6)', backdropFilter: 'blur(6px)', borderRadius: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', textAlign: 'center' }}>
-              <div style={{ fontSize: '48px', marginBottom: '14px' }}>🔒</div>
-              <div style={{ fontSize: '18px', fontWeight: '800', marginBottom: '8px' }}>
-                {t('Butuh Streak 7 Hari', 'Need 7-Day Streak')}
-              </div>
-              <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)', marginBottom: '20px', lineHeight: 1.5 }}>
-                {t('Belajar setiap hari selama 7 hari untuk unlock speaking practice', 'Learn every day for 7 days to unlock speaking practice')}
-              </p>
-
-              {/* Streak dots */}
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
-                {Array.from({ length: 7 }).map((_, i) => (
-                  <div key={i} style={{ width: '28px', height: '28px', borderRadius: '50%', background: i < 1 ? 'linear-gradient(135deg, #FF6B35, #FF4757)' : 'rgba(255,255,255,0.08)', border: '2px solid', borderColor: i < 1 ? '#FF6B35' : 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>
-                    {i < 1 ? '🔥' : ''}
-                  </div>
-                ))}
-              </div>
-
-              <div className="divider" style={{ width: '100%', marginBottom: '16px' }}>{t('atau', 'or')}</div>
-
-              <button className="wa-share-btn" onClick={() => shareToWA()}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                {t('Share & Skip Streak', 'Share & Skip Streak')}
-              </button>
-            </div>
-          </div>
+          ))}
         </div>
-      )
-    }
 
-    // ─────────────── REFERRAL ─────────────────────────────────────────────
-    if (screen === 'referral') {
-      const tiers = [
-        { refs: 1, reward: t('Speaking Practice', 'Speaking Practice'), icon: '🎤', count: 0 },
-        { refs: 3, reward: t('Week 2 Early Access', 'Week 2 Early Access'), icon: '⚡', count: 0 },
-        { refs: 5, reward: t('Business Module', 'Business Module'), icon: '💼', count: 0 },
-        { refs: 10, reward: t('Premium Badge', 'Premium Badge'), icon: '🏆', count: 0 },
-      ]
-      const shareLink = `https://fluentedge-three.vercel.app?ref=${userRef}`
-      return (
-        <div className="screen-enter" style={{ padding: '20px', paddingTop: '60px', paddingBottom: '110px', minHeight: '100vh' }}>
-          <div style={{ marginBottom: '24px' }}>
-            <h2 style={{ fontSize: '22px', fontWeight: '800', marginBottom: '6px' }}>
-              🔗 {t('Bagikan & Dapatkan Hadiah', 'Share & Earn Rewards')}
-            </h2>
-            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.45)' }}>
-              {t('Semakin banyak teman, semakin banyak konten', 'More friends, more content unlocked')}
-            </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 22 }}>
+          <div>
+            <label style={{ color: 'rgba(255,255,255,0.55)', fontSize: 14, fontWeight: 600, display: 'block', marginBottom: 8 }}>{t('Nama (opsional)', 'Name (optional)')}</label>
+            <input value={name} onChange={e => setName(e.target.value)} placeholder={t('Nama kamu...', 'Your name...')}
+              style={{ width: '100%', padding: 16, borderRadius: 14, fontSize: 16, background: 'rgba(255,255,255,0.07)', border: '1.5px solid rgba(255,255,255,0.12)', color: '#fff', outline: 'none', boxSizing: 'border-box' }} />
           </div>
-
-          {/* Referral code box */}
-          <div className="referral-code-box" style={{ marginBottom: '16px' }}>
-            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>
-              {t('Kode Referralmu', 'Your Referral Code')}
+          <div>
+            <label style={{ color: 'rgba(255,255,255,0.55)', fontSize: 14, fontWeight: 600, display: 'block', marginBottom: 8 }}>{t('Nomor WhatsApp *', 'WhatsApp Number *')}</label>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <div style={{ padding: '16px 14px', borderRadius: 14, background: 'rgba(255,255,255,0.07)', border: '1.5px solid rgba(255,255,255,0.12)', color: '#fff', fontWeight: 700, fontSize: 15, whiteSpace: 'nowrap' }}>🇮🇩 +62</div>
+              <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="8123456789" type="tel"
+                style={{ flex: 1, padding: 16, borderRadius: 14, fontSize: 16, background: 'rgba(255,255,255,0.07)', border: '1.5px solid rgba(255,255,255,0.12)', color: '#fff', outline: 'none' }} />
             </div>
-            <div className="referral-code-text">{userRef || 'FLNT-????'}</div>
-            <button className="copy-btn" onClick={() => copyToClipboard(userRef, t('✓ Kode tersalin!', '✓ Code copied!'))}>
-              📋 {t('Salin Kode', 'Copy Code')}
-            </button>
           </div>
+          {refFrom ? (
+            <div style={{ background: 'rgba(255,215,0,0.07)', border: '1px solid rgba(255,215,0,0.3)', borderRadius: 12, padding: '12px 16px', fontSize: 14, color: '#FFD700' }}>
+              ✓ {t('Kode referral:', 'Referral code:')} <strong>{refFrom}</strong>
+            </div>
+          ) : (
+            <div>
+              <label style={{ color: 'rgba(255,255,255,0.55)', fontSize: 14, fontWeight: 600, display: 'block', marginBottom: 8 }}>{t('Kode referral (opsional)', 'Referral code (optional)')}</label>
+              <input value={refFrom} onChange={e => setRefFrom(e.target.value.toUpperCase())} placeholder="FLNT-XXXX"
+                style={{ width: '100%', padding: 16, borderRadius: 14, fontSize: 16, background: 'rgba(255,255,255,0.07)', border: '1.5px solid rgba(255,255,255,0.12)', color: '#fff', outline: 'none', boxSizing: 'border-box', letterSpacing: 1 }} />
+            </div>
+          )}
+        </div>
 
-          {/* Share buttons */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '24px' }}>
-            <button className="wa-share-btn" onClick={() => shareToWA()} style={{ fontSize: '14px', padding: '12px' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-              WhatsApp
-            </button>
-            <button className="btn-outline" onClick={() => copyToClipboard(shareLink, t('✓ Link tersalin!', '✓ Link copied!'))} style={{ fontSize: '14px', padding: '12px' }}>
-              🔗 {t('Salin Link', 'Copy Link')}
-            </button>
-          </div>
+        {submitError && <div style={{ color: '#F44336', fontSize: 14, marginBottom: 16, padding: 12, background: 'rgba(244,67,54,0.1)', borderRadius: 10 }}>{submitError}</div>}
 
-          {/* WA preview */}
-          <div className="wa-preview" style={{ marginBottom: '24px' }}>
-            {waMsg}
-          </div>
+        <button style={{ ...S.btnPrimary, opacity: submitting ? 0.7 : 1, marginBottom: 14 }} onClick={handleRegister} disabled={submitting}>
+          {submitting ? t('Menyimpan...', 'Saving...') : t('✓ Simpan & Lanjutkan', '✓ Save & Continue')}
+        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+          <span>🔒</span>
+          <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13 }}>{t('Data kamu aman, tidak akan dibagikan', 'Your data is safe and never shared')}</p>
+        </div>
+      </div>
+    )
+  }
 
-          {/* Reward tiers */}
-          <div className="section-title">{t('HADIAH REFERRAL', 'REFERRAL REWARDS')}</div>
-          {tiers.map((tier) => (
-            <div key={tier.refs} className="reward-tier">
-              <div className="tier-header">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ fontSize: '22px' }}>{tier.icon}</span>
-                  <div>
-                    <div className="tier-name">{tier.reward}</div>
-                    <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>
-                      {tier.refs} {t('referral', 'referrals')}
-                    </div>
-                  </div>
-                </div>
-                <div className="tier-count">{tier.count}/{tier.refs}</div>
-              </div>
-              <div className="progress-bar-track">
-                <div className="progress-bar-fill" style={{ width: `${(tier.count / tier.refs) * 100}%` }} />
+  function Success() {
+    return (
+      <div style={{ ...S.wrap, textAlign: 'center' }}>
+        <div style={{ fontSize: 72, marginBottom: 12 }}>🎊</div>
+        <h1 style={{ ...S.h1, textAlign: 'center' }}>{t('Kamu sudah terdaftar!', "You're registered!")}</h1>
+        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 15, marginBottom: 30, lineHeight: 1.7 }}>
+          {t('Progressmu tersimpan. Undang teman untuk membuka konten eksklusif.', 'Your progress is saved. Invite friends to unlock exclusive content.')}
+        </p>
+
+        {/* Referral code */}
+        <div style={{ background: 'rgba(255,215,0,0.07)', border: '2px solid rgba(255,215,0,0.35)', borderRadius: 22, padding: 26, marginBottom: 24 }}>
+          <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12, fontWeight: 800, letterSpacing: 2, marginBottom: 12 }}>{t('KODE REFERRALMU', 'YOUR REFERRAL CODE')}</div>
+          <div style={{ fontSize: 34, fontWeight: 900, letterSpacing: 4, color: '#FFD700', marginBottom: 14 }}>{refCode}</div>
+          <button onClick={() => copyCode(refCode)}
+            style={{ background: 'rgba(255,215,0,0.15)', border: '1px solid rgba(255,215,0,0.4)', borderRadius: 10, padding: '10px 22px', color: '#FFD700', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+            {copied ? t('✓ Disalin!', '✓ Copied!') : t('📋 Salin Kode', '📋 Copy Code')}
+          </button>
+        </div>
+
+        {/* Reward tiers */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 26, textAlign: 'left' }}>
+          {[
+            { icon: '🎁', n: 1, reward: { ID: 'Business English Pack (20 pelajaran)', EN: 'Business English Pack (20 lessons)' } },
+            { icon: '🎤', n: 3, reward: { ID: 'Speaking Pro — latihan berbicara tak terbatas', EN: 'Speaking Pro — unlimited speaking practice' } },
+            { icon: '⭐', n: 5, reward: { ID: '1 bulan FluentEdge Pro gratis', EN: '1 month FluentEdge Pro free' } },
+          ].map((r, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, background: 'rgba(255,255,255,0.05)', borderRadius: 14, padding: '14px 18px' }}>
+              <span style={{ fontSize: 26 }}>{r.icon}</span>
+              <div>
+                <div style={{ color: '#FFD700', fontWeight: 700, fontSize: 13 }}>{t(`Undang ${r.n} teman`, `Invite ${r.n} friend${r.n > 1 ? 's' : ''}`)}</div>
+                <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: 13 }}>{r.reward[lang]}</div>
               </div>
             </div>
           ))}
-
-          {/* Leaderboard teaser */}
-          <div style={{ marginTop: '16px', padding: '16px', background: 'rgba(255,215,0,0.06)', border: '1px solid rgba(255,215,0,0.15)', borderRadius: '14px', textAlign: 'center' }}>
-            <div style={{ fontSize: '24px', marginBottom: '8px' }}>🏆</div>
-            <div style={{ fontSize: '14px', fontWeight: '700', marginBottom: '4px' }}>
-              {t('Leaderboard Referral', 'Referral Leaderboard')}
-            </div>
-            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>
-              {t('Top referrer bulan ini dapat hadiah spesial', 'Top referrer this month gets a special prize')}
-            </p>
-          </div>
         </div>
-      )
-    }
 
-    return null
+        <a href={waLink(refCode)} target="_blank" rel="noopener noreferrer"
+          style={{ display: 'block', padding: 18, borderRadius: 16, background: '#25D366', color: '#fff', fontWeight: 800, fontSize: 17, textDecoration: 'none', marginBottom: 12 }}>
+          📤 {t('Bagikan ke WhatsApp', 'Share to WhatsApp')}
+        </a>
+        <button onClick={() => setScreen('dashboard')}
+          style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 15, padding: 8 }}>
+          {t('Lanjut ke Dashboard →', 'Go to Dashboard →')}
+        </button>
+      </div>
+    )
   }
 
-  // ─── Orbs ─────────────────────────────────────────────────────────────────
-  const Orbs = () => (
-    <>
-      <div className="orb orb-1" />
-      <div className="orb orb-2" />
-      <div className="orb orb-3" />
-      <div className="orb orb-4" />
-    </>
-  )
+  function Dashboard() {
+    const lvInfo = LEVELS.find(l => l.id === level) || LEVELS[1]
+    return (
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '24px 20px 100px' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 26 }}>
+          <div>
+            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>{t('Selamat datang kembali 👋', 'Welcome back 👋')}</div>
+            <div style={{ color: '#fff', fontWeight: 900, fontSize: 22 }}>{name || t('Pengguna FluentEdge', 'FluentEdge User')}</div>
+          </div>
+          <div style={{ background: lvInfo.color, borderRadius: 10, padding: '6px 14px', color: '#000', fontWeight: 900, fontSize: 13 }}>{lvInfo.badge}</div>
+        </div>
 
-  // ─── Particles ────────────────────────────────────────────────────────────
-  const Particles = () => (
-    <>
-      {Array.from({ length: 40 }).map((_, i) => (
-        <div
-          key={i}
-          className="particle"
-          style={{
-            left: `${Math.random() * 100}%`,
-            bottom: `${Math.random() * 20}%`,
-            width: `${1 + Math.random() * 3}px`,
-            height: `${1 + Math.random() * 3}px`,
-            background: ['rgba(0,191,255,0.5)', 'rgba(155,89,182,0.5)', 'rgba(255,215,0,0.4)'][i % 3],
-            '--dur': `${6 + Math.random() * 10}s`,
-            '--delay': `${Math.random() * 8}s`,
-            '--drift': `${(Math.random() - 0.5) * 60}px`,
-          }}
-        />
-      ))}
-    </>
-  )
+        {/* Stats */}
+        <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
+          {[
+            { icon: '🔥', label: t('Streak', 'Streak'), val: `1 ${t('hari', 'day')}`, color: '#FF6B35' },
+            { icon: '⚡', label: 'XP', val: '50', color: '#FFD700' },
+            { icon: '📚', label: t('Pelajaran', 'Lessons'), val: '1/30', color: '#00BFFF' },
+          ].map((s, i) => (
+            <div key={i} style={S.statCard}>
+              <div style={{ fontSize: 22, marginBottom: 4 }}>{s.icon}</div>
+              <div style={{ color: s.color, fontWeight: 900, fontSize: 18 }}>{s.val}</div>
+              <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12 }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
 
-  // ─── Bottom Nav ───────────────────────────────────────────────────────────
-  const BottomNav = () => (
-    <nav className="bottom-nav">
-      {[
-        { id: 'dashboard', icon: '🏠', label: t('Beranda', 'Home') },
-        { id: 'lesson', icon: '📚', label: t('Pelajaran', 'Lessons') },
-        { id: 'speaking', icon: '🎤', label: t('Bicara', 'Speak') },
-        { id: 'referral', icon: '🔗', label: t('Bagikan', 'Share') },
-      ].map((item) => (
-        <button
-          key={item.id}
-          className={`nav-item ${screen === item.id ? 'active' : ''}`}
-          onClick={() => goTo(item.id)}
-        >
-          <span>{item.icon}</span>
-          <span>{item.label}</span>
-        </button>
-      ))}
-    </nav>
-  )
+        {/* Today's Plan */}
+        <h2 style={{ fontSize: 18, fontWeight: 800, color: '#fff', marginBottom: 14 }}>📋 {t('Rencana Hari Ini', "Today's Plan")}</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
+          {/* Done */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, background: 'rgba(76,175,80,0.1)', borderRadius: 14, padding: '16px 18px', border: '1px solid rgba(76,175,80,0.25)' }}>
+            <div style={{ width: 42, height: 42, borderRadius: 12, background: 'rgba(76,175,80,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 18 }}>✓</div>
+            <div>
+              <div style={{ color: '#4CAF50', fontWeight: 700, fontSize: 15 }}>Pelajaran 1 — {ls.word}</div>
+              <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13 }}>{t('Selesai ✓', 'Completed ✓')}</div>
+            </div>
+          </div>
+          {/* Next lesson */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, background: 'rgba(255,255,255,0.05)', borderRadius: 14, padding: '16px 18px', border: '1.5px solid rgba(0,191,255,0.3)' }}>
+            <div style={{ width: 42, height: 42, borderRadius: 12, background: 'rgba(0,191,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 18 }}>📖</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ color: '#00BFFF', fontWeight: 700, fontSize: 15 }}>{t('Pelajaran 2 — DELEGATE', 'Lesson 2 — DELEGATE')}</div>
+              <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13 }}>{t('Tersedia besok', 'Available tomorrow')}</div>
+            </div>
+            <span style={{ color: '#00BFFF', fontSize: 18 }}>›</span>
+          </div>
+          {/* Speaking - locked */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, background: 'rgba(255,255,255,0.03)', borderRadius: 14, padding: '16px 18px', border: '1px solid rgba(255,255,255,0.07)', opacity: 0.6 }}>
+            <div style={{ width: 42, height: 42, borderRadius: 12, background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 18 }}>🔒</div>
+            <div>
+              <div style={{ color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontSize: 15 }}>{t('Latihan Berbicara', 'Speaking Practice')}</div>
+              <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13 }}>{t('Undang 1 teman untuk membuka', 'Invite 1 friend to unlock')}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Referral banner */}
+        {refCode && (
+          <div style={{ background: 'linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,165,0,0.06))', border: '1px solid rgba(255,215,0,0.25)', borderRadius: 18, padding: '20px', marginBottom: 22 }}>
+            <div style={{ color: '#FFD700', fontWeight: 800, fontSize: 16, marginBottom: 6 }}>🎁 {t('Undang Teman, Dapat Reward!', 'Invite Friends, Get Rewards!')}</div>
+            <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: 14, marginBottom: 14 }}>
+              {t('Kode referralmu: ', 'Your code: ')}<strong style={{ color: '#FFD700', letterSpacing: 2 }}>{refCode}</strong>
+            </div>
+            <a href={waLink(refCode)} target="_blank" rel="noopener noreferrer"
+              style={{ display: 'inline-block', background: '#25D366', color: '#fff', fontWeight: 700, fontSize: 14, padding: '10px 20px', borderRadius: 10, textDecoration: 'none' }}>
+              📤 {t('Bagikan Sekarang', 'Share Now')}
+            </a>
+          </div>
+        )}
+
+        {/* Progress bar */}
+        <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 16, padding: '18px 20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+            <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: 14, fontWeight: 600 }}>{t('Progress Jalur', 'Path Progress')} — {lvInfo[lang]}</span>
+            <span style={{ color: '#00BFFF', fontWeight: 700, fontSize: 14 }}>1/30</span>
+          </div>
+          <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 100, height: 8, overflow: 'hidden' }}>
+            <div style={{ width: '3.3%', height: '100%', background: 'linear-gradient(90deg, #00BFFF, #9B59B6)', borderRadius: 100 }} />
+          </div>
+          <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, marginTop: 10 }}>
+            {t('29 pelajaran lagi untuk selesaikan jalur ini', '29 more lessons to complete this path')}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ─── Toggle ───────────────────────────────────────────────────────────────────
+
+  const SCREEN_MAP = { splash: Splash, goal: Goal, level: Level, time: Time, community: Community, building: Building, lesson: Lesson, 'lesson-done': LessonDone, register: Register, success: Success, dashboard: Dashboard }
+  const Screen = SCREEN_MAP[screen] || Splash
 
   return (
     <>
       <Head>
-        <title>FluentEdge — Master Business English</title>
-        <meta name="description" content="Kuasai Bahasa Inggris Bisnis dalam 6 bulan. Tes level gratis, curriculum terstruktur, dan komunitas belajar." />
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+        <title>FluentEdge — Bahasa Inggris Profesional</title>
+        <meta name="description" content={t('Kuasai bahasa Inggris profesional dalam 4-6 bulan. Dibuat untuk warga Batam.', 'Master professional English in 4-6 months. Built for Batam.')} />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta name="theme-color" content="#0A0F1E" />
-        <link rel="icon" href="/favicon.ico" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
       </Head>
-
-      <Orbs />
-      <Particles />
-
-      {/* Language toggle — hidden on splash */}
-      {screen !== 'splash' && (
-        <div className="lang-toggle">
-          <button className={`lang-btn ${lang === 'id' ? 'active' : ''}`} onClick={() => setLang('id')}>
-            🇮🇩 ID
+      <div style={S.page}>
+        {/* Lang toggle — hidden on splash */}
+        {screen !== 'splash' && (
+          <button onClick={toggleLang}
+            aria-label={lang === 'EN' ? 'Ganti ke Bahasa Indonesia' : 'Switch to English'}
+            style={{ position: 'fixed', top: 'max(16px, env(safe-area-inset-top, 16px))', right: 16, zIndex: 1000, background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 20, padding: '8px 16px', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+            {lang === 'ID' ? '🇬🇧 EN' : '🇮🇩 ID'}
           </button>
-          <button className={`lang-btn ${lang === 'en' ? 'active' : ''}`} onClick={() => setLang('en')}>
-            🇬🇧 EN
-          </button>
-        </div>
-      )}
-
-      {/* Toast */}
-      {toast && (
-        <div className={`toast ${toastHiding ? 'hiding' : ''}`}>{toast}</div>
-      )}
-
-      {/* Main app container */}
-      <div style={{
-        position: 'relative',
-        zIndex: 10,
-        maxWidth: '430px',
-        margin: '0 auto',
-        minHeight: '100vh',
-      }}>
-        {renderScreen()}
-        {showBottomNav && <BottomNav />}
+        )}
+        <Screen />
       </div>
     </>
   )
