@@ -3,14 +3,17 @@ import Head from 'next/head'
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 const C = {
-  bg:           '#EEF2F7',
+  bg:           '#F5F3EF',
   surface:      '#FFFFFF',
   border:       '#DDE4EE',
-  borderLight:  '#EEF2F7',
-  primary:      '#0D47A1',
-  primaryDark:  '#0A3880',
-  primaryLight: '#EBF3FF',
-  primaryMid:   '#1565C0',
+  borderLight:  '#F5F3EF',
+  primary:      '#0A2540',
+  primaryDark:  '#071A2E',
+  primaryLight: '#E6EBF4',
+  primaryMid:   '#0D3060',
+  cta:          '#00A896',
+  ctaDark:      '#007A6E',
+  ctaLight:     '#E6F7F5',
   text:         '#0F172A',
   textMuted:    '#5B6B82',
   textLight:    '#94A3B8',
@@ -22,9 +25,9 @@ const C = {
   goldBg:       '#FEF3C7',
   wa:           '#128C7E',
   waBg:         '#D1FAE5',
-  shadow:       '0 1px 4px rgba(13,71,161,0.06), 0 4px 16px rgba(13,71,161,0.06)',
+  shadow:       '0 1px 4px rgba(10,37,64,0.06), 0 4px 16px rgba(10,37,64,0.06)',
   shadowSm:     '0 1px 3px rgba(0,0,0,0.07)',
-  shadowLg:     '0 4px 6px rgba(0,0,0,0.04), 0 12px 40px rgba(13,71,161,0.1)',
+  shadowLg:     '0 4px 6px rgba(0,0,0,0.04), 0 12px 40px rgba(10,37,64,0.1)',
   radius:       '12px',
   radiusSm:     '8px',
   radiusLg:     '16px',
@@ -139,11 +142,11 @@ function PrimaryBtn({ children, onClick, disabled, style = {} }) {
   return (
     <button onClick={onClick} disabled={disabled} style={{
       width: '100%', padding: '16px 24px', borderRadius: C.radius,
-      background: disabled ? '#94A3B8' : C.primary,
+      background: disabled ? '#94A3B8' : C.cta,
       color: '#fff', fontWeight: 700, fontSize: 16,
       border: 'none', cursor: disabled ? 'not-allowed' : 'pointer',
       letterSpacing: 0.2, transition: 'background 0.15s',
-      boxShadow: disabled ? 'none' : `0 2px 8px ${C.primary}40`,
+      boxShadow: disabled ? 'none' : `0 2px 8px ${C.cta}50`,
       ...style,
     }}>
       {children}
@@ -1086,9 +1089,9 @@ export default function Home() {
         <title>FluentEdge — Professional English</title>
         <meta name="description" content={t('Kuasai bahasa Inggris profesional. Dirancang untuk para profesional di Batam.', 'Master professional English. Designed for Batam professionals.')} />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-        <meta name="theme-color" content="#0D47A1" />
+        <meta name="theme-color" content="#0A2540" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       </Head>
       <Screen />
     </>
