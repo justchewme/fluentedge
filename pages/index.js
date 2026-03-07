@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
-import { VOCAB_BANK, GRAMMAR_BANK, READING_BANK, SPEAKING_BANK, CURRICULUM_WEEKS } from '../content'
+import { VOCAB_BANK, GRAMMAR_BANK, READING_BANK, SPEAKING_BANK, CURRICULUM_WEEKS, BUSINESS_BANK } from '../content'
 
 /* ═══════════════════════════════════════════════════════════════════════════════
    DESIGN TOKENS
@@ -106,6 +106,14 @@ export default function FluentEdge() {
   const [feedback,   setFeedback]   = useState(null) // 'correct' | 'wrong'
   const [lessonXp,   setLessonXp]   = useState(0)
 
+  // ── Business Module ───────────────────────────────────────────────────────────
+  const [bizUnit,     setBizUnit]     = useState(0)
+  const [bizStep,     setBizStep]     = useState(0)   // 0=phrases, 1+=exercise index
+  const [bizSelected, setBizSelected] = useState(null)
+  const [bizFeedback, setBizFeedback] = useState(null)
+  const [bizXp,       setBizXp]       = useState(0)
+  const [bizProgress, setBizProgress] = useState([])  // completed unit IDs
+
   // ── Plan loading ──────────────────────────────────────────────────────────────
   const [loadStep, setLoadStep] = useState(0)
 
@@ -128,6 +136,9 @@ export default function FluentEdge() {
         setXp(pr.xp || 0); setStreak(pr.streak || 0)
         setDay(pr.day || 1); setCompletedDays(pr.completedDays || [])
       }
+
+      const bizProg = localStorage.getItem('fe_biz_progress')
+      if (bizProg) setBizProgress(JSON.parse(bizProg))
 
       if (sp) setScreen('dashboard')
     } catch {}
@@ -576,6 +587,32 @@ export default function FluentEdge() {
             </div>
           </div>
 
+          {/* Business English Pack */}
+          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, padding: 20, marginTop: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
+              <div style={{ width: 46, height: 46, borderRadius: 12, background: C.goldGlow, border: `1px solid rgba(196,151,58,0.3)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Icon name="briefcase" size={20} color={C.gold} />
+              </div>
+              <div>
+                <p style={{ fontFamily: PJ, fontSize: 10, fontWeight: 700, color: C.gold, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 2 }}>{t('BONUS MODULE', 'MODUL BONUS')}</p>
+                <h3 style={{ fontFamily: FR, fontSize: 18, fontWeight: 800, color: C.text, lineHeight: 1 }}>{t('Business English Pack', 'Paket Business English')}</h3>
+              </div>
+            </div>
+            <p style={{ fontFamily: PJ, fontSize: 13, color: C.textSec, marginBottom: 12, lineHeight: 1.55 }}>
+              {t('10 units · Workplace phrases, email, negotiation & more', '10 unit · Frasa kerja, email, negosiasi & lebih banyak lagi')}
+            </p>
+            <div style={{ display: 'flex', gap: 4, marginBottom: 14 }}>
+              {BUSINESS_BANK.map(u => (
+                <div key={u.id} style={{ flex: 1, height: 4, borderRadius: 2, background: bizProgress.includes(u.id) ? C.gold : C.elevated }} />
+              ))}
+            </div>
+            <button
+              onClick={() => setScreen('business-home')}
+              style={{ width: '100%', background: C.elevated, color: C.text, border: `1px solid ${C.border}`, borderRadius: 12, padding: '13px', fontSize: 15, fontWeight: 700, fontFamily: PJ, cursor: 'pointer' }}>
+              {bizProgress.length === 0 ? t('Start Business Pack →', 'Mulai Business Pack →') : t(`Continue Pack (${bizProgress.length}/10 done)`, `Lanjutkan (${bizProgress.length}/10 selesai)`)}
+            </button>
+          </div>
+
           {/* Reset */}
           <div style={{ textAlign: 'center', marginTop: 24 }}>
             <button onClick={() => { localStorage.clear(); window.location.reload() }}
@@ -583,6 +620,161 @@ export default function FluentEdge() {
               {t('Reset progress', 'Reset progres')}
             </button>
           </div>
+        </div>
+      </Shell>
+    )
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     BUSINESS HOME
+  ═══════════════════════════════════════════════════════════════════════════ */
+  if (screen === 'business-home') return (
+    <Shell lang={lang} setLang={setLang}>
+      <div style={{ padding: '28px 20px 80px', maxWidth: 420, margin: '0 auto' }}>
+        <button onClick={() => setScreen('dashboard')}
+          style={{ background: 'none', border: 'none', fontFamily: PJ, fontSize: 14, color: C.textSec, cursor: 'pointer', padding: '0 0 20px', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Icon name="arrow-right" size={14} color={C.textSec} strokeWidth={2} style={{ transform: 'rotate(180deg)' }} />
+          {t('Back', 'Kembali')}
+        </button>
+        <p style={{ fontFamily: PJ, fontSize: 10, fontWeight: 700, color: C.gold, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 6 }}>{t('BONUS MODULE', 'MODUL BONUS')}</p>
+        <h1 style={{ fontFamily: FR, fontSize: 32, fontWeight: 900, color: C.text, lineHeight: 1.1, marginBottom: 10 }}>{t('Business English Pack', 'Paket Business English')}</h1>
+        <p style={{ fontFamily: PJ, fontSize: 14, color: C.textSec, lineHeight: 1.65, marginBottom: 24 }}>
+          {t('10 essential workplace English units for professionals. Master the language of business from Batam to Singapore.', '10 unit bahasa Inggris bisnis esensial untuk profesional. Kuasai bahasa bisnis dari Batam hingga Singapura.')}
+        </p>
+        {BUSINESS_BANK.map((unit, i) => {
+          const done = bizProgress.includes(unit.id)
+          return (
+            <div key={unit.id}
+              onClick={() => { setBizUnit(i); setBizStep(0); setBizSelected(null); setBizFeedback(null); setBizXp(0); setScreen('business-lesson') }}
+              style={{ background: C.card, border: `1px solid ${done ? C.accentBorder : C.border}`, borderRadius: 16, padding: '16px 18px', marginBottom: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 10, background: done ? C.successBg : C.elevated, border: `1px solid ${done ? C.accentBorder : C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                {done
+                  ? <Icon name="check" size={18} color={C.success} strokeWidth={2.5} />
+                  : <span style={{ fontFamily: FR, fontSize: 15, fontWeight: 800, color: C.textMuted }}>{String(unit.id).padStart(2, '0')}</span>}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontFamily: PJ, fontSize: 14, fontWeight: 600, color: C.text }}>{lang === 'en' ? unit.titleEN : unit.titleID}</div>
+                <div style={{ fontFamily: PJ, fontSize: 11, color: C.textMuted, marginTop: 2 }}>{unit.exercises.length} {t('exercises', 'latihan')} · {unit.phrases.length} {t('phrases', 'frasa')}</div>
+              </div>
+              <Icon name="arrow-right" size={15} color={done ? C.accentBorder : C.border} />
+            </div>
+          )
+        })}
+      </div>
+    </Shell>
+  )
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     BUSINESS LESSON
+  ═══════════════════════════════════════════════════════════════════════════ */
+  if (screen === 'business-lesson') {
+    const unit   = BUSINESS_BANK[bizUnit]
+    const exIdx  = bizStep - 1
+    const isDone = bizStep > unit.exercises.length
+
+    function finishBizUnit() {
+      const newProgress = bizProgress.includes(unit.id) ? bizProgress : [...bizProgress, unit.id]
+      setBizProgress(newProgress)
+      localStorage.setItem('fe_biz_progress', JSON.stringify(newProgress))
+      const earned = bizXp
+      setXp(x => x + earned)
+      localStorage.setItem('fe_progress', JSON.stringify({ xp: xp + earned, streak, day, completedDays }))
+      setScreen('business-home')
+    }
+
+    // ── Completion screen ──────────────────────────────────────────────────
+    if (isDone) return (
+      <Shell lang={lang} setLang={setLang}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '48px 24px', textAlign: 'center' }}>
+          <div style={{ width: 72, height: 72, borderRadius: '50%', background: C.goldGlow, border: `2px solid rgba(196,151,58,0.4)`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+            <Icon name="star" size={32} color={C.gold} strokeWidth={1.5} />
+          </div>
+          <p style={{ fontFamily: PJ, fontSize: 11, fontWeight: 700, color: C.gold, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 8 }}>{t('UNIT COMPLETE', 'UNIT SELESAI')}</p>
+          <h2 style={{ fontFamily: FR, fontSize: 28, fontWeight: 900, color: C.text, marginBottom: 8, lineHeight: 1.1 }}>{lang === 'en' ? unit.titleEN : unit.titleID}</h2>
+          <p style={{ fontFamily: PJ, fontSize: 14, color: C.textSec, marginBottom: 24, lineHeight: 1.6 }}>
+            {t(`You earned ${bizXp} XP from this unit.`, `Kamu mendapatkan ${bizXp} XP dari unit ini.`)}
+          </p>
+          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: '16px 24px', marginBottom: 24, width: '100%', maxWidth: 320 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ fontFamily: PJ, fontSize: 13, color: C.textSec }}>{t('Units completed', 'Unit selesai')}</span>
+              <span style={{ fontFamily: FR, fontSize: 16, fontWeight: 800, color: C.accent }}>{(bizProgress.includes(unit.id) ? bizProgress.length : bizProgress.length + 1)} / 10</span>
+            </div>
+          </div>
+          <button onClick={finishBizUnit}
+            style={{ background: C.gold, color: '#1A1816', border: 'none', borderRadius: 14, padding: '16px 36px', fontSize: 16, fontWeight: 800, fontFamily: PJ, cursor: 'pointer', boxShadow: `0 2px 24px ${C.goldGlow}`, width: '100%', maxWidth: 320 }}>
+            {t('Back to Business Pack →', 'Kembali ke Business Pack →')}
+          </button>
+        </div>
+      </Shell>
+    )
+
+    // ── Phrase reference card ──────────────────────────────────────────────
+    if (bizStep === 0) return (
+      <Shell lang={lang} setLang={setLang}>
+        <div style={{ padding: '28px 20px 80px', maxWidth: 420, margin: '0 auto' }}>
+          <button onClick={() => setScreen('business-home')}
+            style={{ background: 'none', border: 'none', fontFamily: PJ, fontSize: 14, color: C.textSec, cursor: 'pointer', padding: '0 0 20px', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Icon name="arrow-right" size={14} color={C.textSec} strokeWidth={2} />
+            {t('Back', 'Kembali')}
+          </button>
+          <p style={{ fontFamily: PJ, fontSize: 10, fontWeight: 700, color: C.gold, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 6 }}>
+            {t(`UNIT ${unit.id} OF 10`, `UNIT ${unit.id} DARI 10`)}
+          </p>
+          <h1 style={{ fontFamily: FR, fontSize: 26, fontWeight: 900, color: C.text, lineHeight: 1.1, marginBottom: 20 }}>
+            {lang === 'en' ? unit.titleEN : unit.titleID}
+          </h1>
+          <p style={{ fontFamily: PJ, fontSize: 13, color: C.textSec, marginBottom: 16 }}>
+            {t('Study these key phrases, then complete the exercises.', 'Pelajari frasa-frasa kunci ini, lalu selesaikan latihan.')}
+          </p>
+          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, overflow: 'hidden', marginBottom: 24 }}>
+            {unit.phrases.map((ph, i) => (
+              <div key={i} style={{ padding: '14px 18px', borderBottom: i < unit.phrases.length - 1 ? `1px solid ${C.elevated}` : 'none' }}>
+                <div style={{ fontFamily: PJ, fontSize: 10, fontWeight: 700, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{ph.situation}</div>
+                <div style={{ fontFamily: PJ, fontSize: 14, fontWeight: 600, color: C.text, marginBottom: 2 }}>{ph.en}</div>
+                <div style={{ fontFamily: PJ, fontSize: 13, color: C.textSec }}>{ph.id}</div>
+              </div>
+            ))}
+          </div>
+          <button onClick={() => setBizStep(1)}
+            style={{ width: '100%', background: C.accent, color: '#fff', border: 'none', borderRadius: 14, padding: '16px', fontSize: 16, fontWeight: 700, fontFamily: PJ, cursor: 'pointer', boxShadow: `0 0 28px ${C.accentGlow}` }}>
+            {t(`Start ${unit.exercises.length} Exercises →`, `Mulai ${unit.exercises.length} Latihan →`)}
+          </button>
+        </div>
+      </Shell>
+    )
+
+    // ── Exercise MCQ ───────────────────────────────────────────────────────
+    const ex = unit.exercises[exIdx]
+    return (
+      <Shell lang={lang} setLang={setLang}>
+        <div style={{ padding: '28px 20px 80px', maxWidth: 420, margin: '0 auto' }}>
+          {/* Progress bar */}
+          <div style={{ display: 'flex', gap: 4, marginBottom: 20 }}>
+            {unit.exercises.map((_, i) => (
+              <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i < exIdx ? C.accent : i === exIdx ? C.accentGlow : C.elevated, transition: 'background 0.3s' }} />
+            ))}
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+            <p style={{ fontFamily: PJ, fontSize: 11, fontWeight: 700, color: C.textMuted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+              {lang === 'en' ? unit.titleEN : unit.titleID}
+            </p>
+            <span style={{ fontFamily: PJ, fontSize: 12, color: C.textMuted }}>{exIdx + 1} / {unit.exercises.length}</span>
+          </div>
+          <MCQQuestion
+            question={ex.q}
+            options={ex.options}
+            answer={ex.answer}
+            selected={bizSelected}
+            feedback={bizFeedback}
+            lang={lang}
+            tip={bizFeedback ? ex.tip : null}
+            onSelect={opt => {
+              setBizSelected(opt)
+              setBizFeedback(opt === ex.answer ? 'correct' : 'wrong')
+              if (opt === ex.answer) setBizXp(x => x + 20)
+            }}
+            onNext={() => { setBizStep(s => s + 1); setBizSelected(null); setBizFeedback(null) }}
+          />
         </div>
       </Shell>
     )
@@ -599,7 +791,7 @@ export default function FluentEdge() {
     function renderVocab() {
       const card = lessonData.vocabCards[cardIdx]
       if (!card) return (
-        <CenteredCompletion icon="✅" msg={t('All vocab cards done!', 'Semua kartu kosakata selesai!')}
+        <CenteredCompletion icon="check" msg={t('All vocab cards done!', 'Semua kartu kosakata selesai!')}
           btnLabel={t('Next Activity →', 'Aktivitas Berikutnya →')}
           onNext={() => { awardXp(25); nextAct() }} />
       )
@@ -702,7 +894,7 @@ export default function FluentEdge() {
       const exIdx = qIdx - 1
 
       if (exIdx >= Math.min(exercises.length, 3)) {
-        return <CenteredCompletion icon="✅" msg={t('Grammar exercises done!', 'Latihan grammar selesai!')} btnLabel={t('Next Activity →', 'Aktivitas Berikutnya →')} onNext={() => { awardXp(30); nextAct() }} />
+        return <CenteredCompletion icon="check" msg={t('Grammar exercises done!', 'Latihan grammar selesai!')} btnLabel={t('Next Activity →', 'Aktivitas Berikutnya →')} onNext={() => { awardXp(30); nextAct() }} />
       }
 
       const ex   = exercises[exIdx]
@@ -745,7 +937,7 @@ export default function FluentEdge() {
       const qNum = qIdx - 1
 
       if (qNum >= Math.min(questions.length, 3)) {
-        return <CenteredCompletion icon="✅" msg={t('Reading complete!', 'Bacaan selesai!')} btnLabel={t('Next Activity →', 'Aktivitas Berikutnya →')} onNext={() => { awardXp(30); nextAct() }} />
+        return <CenteredCompletion icon="check" msg={t('Reading complete!', 'Bacaan selesai!')} btnLabel={t('Next Activity →', 'Aktivitas Berikutnya →')} onNext={() => { awardXp(30); nextAct() }} />
       }
 
       const q = questions[qNum]
@@ -766,7 +958,7 @@ export default function FluentEdge() {
       const questions = lessonData.quizQuestions
 
       if (qIdx >= questions.length) {
-        return <CenteredCompletion icon="🏆" msg={t('Quiz complete!', 'Kuis selesai!')} btnLabel={t('Final Activity →', 'Aktivitas Terakhir →')} onNext={() => { awardXp(30); nextAct() }} />
+        return <CenteredCompletion icon="star" msg={t('Quiz complete!', 'Kuis selesai!')} btnLabel={t('Final Activity →', 'Aktivitas Terakhir →')} onNext={() => { awardXp(30); nextAct() }} />
       }
 
       const q = questions[qIdx]
@@ -1003,7 +1195,7 @@ function SurveyCard({ icon, title, desc, selected, onClick, compact }) {
   )
 }
 
-function MCQQuestion({ question, subtext, options, answer, selected, feedback, lang, onSelect, onNext, progress }) {
+function MCQQuestion({ question, subtext, options, answer, selected, feedback, lang, onSelect, onNext, progress, tip }) {
   const C2 = {
     card: '#FFFFFF', elevated: '#EDE9E3', border: '#D8D2C8',
     accent: '#2D5016', accentGlow: 'rgba(45,80,22,0.1)',
@@ -1050,6 +1242,13 @@ function MCQQuestion({ question, subtext, options, answer, selected, feedback, l
               </p>
             )}
           </div>
+          {tip && (
+            <div style={{ background: '#F7F4EF', border: '1px solid #D8D2C8', borderRadius: 12, padding: '12px 16px', marginBottom: 12 }}>
+              <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 13, color: '#6B6560', margin: 0, lineHeight: 1.55 }}>
+                <strong style={{ color: '#1A1816' }}>{lang === 'en' ? 'Tip: ' : 'Tips: '}</strong>{tip}
+              </p>
+            </div>
+          )}
           <button onClick={onNext}
             style={{ width: '100%', background: C2.accent, color: '#fff', border: 'none', borderRadius: 14, padding: '16px', fontSize: 16, fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif", cursor: 'pointer', boxShadow: `0 0 28px ${C2.accentGlow}` }}>
             {lang === 'en' ? 'Next →' : 'Lanjut →'}
