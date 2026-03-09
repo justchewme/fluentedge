@@ -106,6 +106,9 @@ export default function FluentEdge() {
   const [feedback,   setFeedback]   = useState(null) // 'correct' | 'wrong'
   const [lessonXp,   setLessonXp]   = useState(0)
 
+  // ── FAQ ───────────────────────────────────────────────────────────────────────
+  const [openFaq, setOpenFaq] = useState(null)
+
   // ── Business Module ───────────────────────────────────────────────────────────
   const [bizUnit,     setBizUnit]     = useState(0)
   const [bizStep,     setBizStep]     = useState(0)   // 0=phrases, 1+=exercise index
@@ -220,47 +223,188 @@ export default function FluentEdge() {
   /* ═══════════════════════════════════════════════════════════════════════════
      SPLASH
   ═══════════════════════════════════════════════════════════════════════════ */
-  if (screen === 'splash') return (
-    <Shell lang={lang} setLang={setLang}>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '48px 24px', textAlign: 'center' }}>
-        <div style={{ width: 64, height: 64, borderRadius: 16, background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 28 }}>
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-        </div>
+  if (screen === 'splash') {
+    const CURRICULUM_PREVIEW = [
+      { week: 1,  en: 'Professional Introductions',    id: 'Perkenalan Profesional' },
+      { week: 3,  en: 'Meetings & Agendas',            id: 'Rapat & Agenda' },
+      { week: 6,  en: 'Presentations & Pitching',      id: 'Presentasi & Pitching' },
+      { week: 7,  en: 'Negotiations',                  id: 'Negosiasi' },
+      { week: 13, en: 'Advanced Business Writing',     id: 'Penulisan Bisnis Lanjutan' },
+      { week: 20, en: 'Leadership Communication',      id: 'Komunikasi Kepemimpinan' },
+      { week: 26, en: 'Professional Mastery',          id: 'Penguasaan Profesional' },
+    ]
+    const TESTIMONIALS = [
+      { name: 'Rina W.', role: t('Admin Staff, Batam', 'Staff Admin, Batam'),    stars: 5, quote: t('"From dreading Singapore client calls to leading international meetings myself."', '"Dari takut angkat telepon klien Singapura — sekarang saya yang pimpin meetingnya."') },
+      { name: 'Ahmad F.', role: t('Production Supervisor', 'Supervisor Produksi'), stars: 5, quote: t('"Got promoted after presenting in English to Japanese management."', '"Dapat promosi setelah presentasi bahasa Inggris di depan manajemen Jepang."') },
+      { name: 'Dewi A.', role: t('Fresh Graduate, 22', 'Fresh Graduate, 22'),    stars: 5, quote: t('"Landed a job at a multinational company. My English score jumped in just 3 months."', '"Diterima kerja di perusahaan multinasional. Nilai English saya naik drastis dalam 3 bulan."') },
+    ]
+    const FAQS = [
+      { q: t('What level is this for?', 'Untuk level apa?'), a: t('Beginner to intermediate. A placement test at the start puts you in the right track.', 'Pemula hingga menengah. Placement test di awal menentukan track yang tepat untukmu.') },
+      { q: t('Speaking or writing?', 'Untuk speaking atau writing?'), a: t('Both — daily lessons cover vocabulary, grammar, reading comprehension, and speaking prompts with TTS audio.', 'Keduanya — pelajaran harian mencakup kosakata, grammar, membaca, dan latihan berbicara dengan audio TTS.') },
+      { q: t('How long until I see results?', 'Berapa lama sampai terasa hasilnya?'), a: t('Most learners feel a real difference by week 4. Consistent 60-min daily practice is the key.', 'Kebanyakan pelajar merasakan perbedaan nyata di minggu ke-4. Konsisten 60 menit sehari adalah kuncinya.') },
+      { q: t('Is it really free?', 'Apakah benar-benar gratis?'), a: t('100% free. No credit card. No hidden payments. No catch.', '100% gratis. Tanpa kartu kredit. Tanpa biaya tersembunyi. Tidak ada jebakan.') },
+    ]
 
-        <p style={{ fontFamily: PJ, fontSize: 12, fontWeight: 700, letterSpacing: '0.18em', color: C.accent, textTransform: 'uppercase', marginBottom: 18 }}>FluentEdge</p>
+    return (
+      <Shell lang={lang} setLang={setLang}>
+        <div style={{ maxWidth: 440, margin: '0 auto', padding: '0 20px 80px' }}>
 
-        <h1 style={{ fontFamily: FR, fontSize: 42, fontWeight: 900, color: C.text, lineHeight: 1.1, marginBottom: 20, maxWidth: 340 }}>
-          {t('Speak English like the elite do.', 'Bicara Inggris seperti orang sukses.')}
-        </h1>
-
-        <p style={{ fontFamily: PJ, fontSize: 15, color: C.textSec, lineHeight: 1.65, maxWidth: 300, marginBottom: 44 }}>
-          {t(
-            'A structured 6-month program for professionals in Batam — 60 minutes a day, every day.',
-            'Program 6 bulan terstruktur untuk profesional Batam — 60 menit sehari, setiap hari.'
-          )}
-        </p>
-
-        <div style={{ display: 'flex', gap: 28, marginBottom: 44 }}>
-          {[['180', t('Lessons', 'Pelajaran')], ['26', t('Weeks', 'Minggu')], ['6k+', t('Learners', 'Pelajar')]].map(([n, l]) => (
-            <div key={l} style={{ textAlign: 'center' }}>
-              <div style={{ fontFamily: FR, fontSize: 30, fontWeight: 800, color: C.accent }}>{n}</div>
-              <div style={{ fontFamily: PJ, fontSize: 12, color: C.textMuted, marginTop: 2 }}>{l}</div>
+          {/* ── HERO (above fold) ───────────────────────────────────── */}
+          <div style={{ textAlign: 'center', paddingTop: 52, paddingBottom: 44 }}>
+            <div style={{ width: 56, height: 56, borderRadius: 14, background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
             </div>
-          ))}
+            <p style={{ fontFamily: PJ, fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', color: C.accent, textTransform: 'uppercase', marginBottom: 16 }}>FluentEdge</p>
+            <h1 style={{ fontFamily: FR, fontSize: 40, fontWeight: 900, color: C.text, lineHeight: 1.1, marginBottom: 16 }}>
+              {t('Speak English like the elite do.', 'Bicara Inggris seperti orang sukses.')}
+            </h1>
+            {lang === 'id' && (
+              <p style={{ fontFamily: PJ, fontSize: 12, color: C.textMuted, marginBottom: 6, fontStyle: 'italic' }}>
+                "Speak English like the elite do."
+              </p>
+            )}
+            <p style={{ fontFamily: PJ, fontSize: 15, color: C.textSec, lineHeight: 1.65, marginBottom: 32 }}>
+              {t(
+                'A structured 6-month program for Batam professionals — 60 minutes a day.',
+                'Program 6 bulan terstruktur untuk profesional Batam — 60 menit sehari.'
+              )}
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 28, marginBottom: 36 }}>
+              {[['180', t('Lessons', 'Pelajaran'), 'lessons'], ['26', t('Weeks', 'Minggu'), 'weeks'], ['6k+', t('Learners', 'Pelajar'), 'learners']].map(([n, l]) => (
+                <div key={l} style={{ textAlign: 'center' }}>
+                  <div style={{ fontFamily: FR, fontSize: 28, fontWeight: 800, color: C.accent }}>{n}</div>
+                  <div style={{ fontFamily: PJ, fontSize: 11, color: C.textMuted, marginTop: 2 }}>{l}</div>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => setScreen('survey-goal')}
+              style={{ background: C.accent, color: '#fff', border: 'none', borderRadius: 16, padding: '18px', fontSize: 17, fontWeight: 700, fontFamily: PJ, cursor: 'pointer', width: '100%', boxShadow: `0 0 40px ${C.accentGlow}`, letterSpacing: '0.02em', marginBottom: 12 }}>
+              {t('Start My Free Assessment →', 'Mulai Asesmen Gratis →')}
+            </button>
+            <p style={{ fontFamily: PJ, fontSize: 12, color: C.textMuted }}>
+              {t('No payment · No credit card · 100% free', 'Tanpa bayaran · Tanpa kartu kredit · 100% gratis')}
+            </p>
+          </div>
+
+          {/* ── WHO IT'S FOR ─────────────────────────────────────────── */}
+          <div style={{ marginBottom: 40 }}>
+            <p style={{ fontFamily: PJ, fontSize: 10, fontWeight: 700, color: C.accent, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 8 }}>{t('WHO IT\'S FOR', 'UNTUK SIAPA')}</p>
+            <h2 style={{ fontFamily: FR, fontSize: 24, fontWeight: 800, color: C.text, marginBottom: 16, lineHeight: 1.2 }}>
+              {t('Made for Batam professionals.', 'Dibuat khusus untuk profesional Batam.')}
+            </h2>
+            {[
+              { icon: 'briefcase', en: 'Staff & managers wanting promotion', id: 'Staff & manajer yang ingin naik jabatan', desc: t('Impress leadership, handle cross-border meetings, get promoted.', 'Impress atasan, handle rapat lintas negara, dan raih promosi.') },
+              { icon: 'exchange',  en: 'Business owners dealing internationally', id: 'Pemilik bisnis yang deal dengan luar negeri', desc: t('Close deals with Singapore and international clients confidently.', 'Deal dengan klien Singapura dan internasional dengan percaya diri.') },
+              { icon: 'academic',  en: 'Fresh graduates entering the workforce', id: 'Fresh graduate yang ingin bersaing', desc: t('Stand out in interviews. Qualify for multinational roles.', 'Unggul di interview. Lolos seleksi perusahaan multinasional.') },
+            ].map((p, i) => (
+              <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: '16px 18px', marginBottom: 10, display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                <div style={{ width: 38, height: 38, borderRadius: 10, background: C.elevated, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
+                  <Icon name={p.icon} size={17} color={C.accent} />
+                </div>
+                <div>
+                  <div style={{ fontFamily: PJ, fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 3 }}>{t(p.en, p.id)}</div>
+                  {lang === 'id' && <div style={{ fontFamily: PJ, fontSize: 11, color: C.textMuted, fontStyle: 'italic', marginBottom: 4 }}>{p.en}</div>}
+                  <div style={{ fontFamily: PJ, fontSize: 13, color: C.textSec, lineHeight: 1.5 }}>{p.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* ── CURRICULUM PREVIEW ───────────────────────────────────── */}
+          <div style={{ marginBottom: 40 }}>
+            <p style={{ fontFamily: PJ, fontSize: 10, fontWeight: 700, color: C.accent, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 8 }}>{t('CURRICULUM', 'KURIKULUM')}</p>
+            <h2 style={{ fontFamily: FR, fontSize: 24, fontWeight: 800, color: C.text, marginBottom: 6, lineHeight: 1.2 }}>
+              {t('26 weeks. 180 lessons. One transformation.', '26 minggu. 180 pelajaran. Satu perubahan nyata.')}
+            </h2>
+            <p style={{ fontFamily: PJ, fontSize: 13, color: C.textSec, marginBottom: 16, lineHeight: 1.55 }}>
+              {t('Every week builds on the last — from your first professional greeting to leading international negotiations.', 'Setiap minggu membangun dari yang sebelumnya — dari sapaan profesional pertama hingga memimpin negosiasi internasional.')}
+            </p>
+            <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, overflow: 'hidden' }}>
+              {CURRICULUM_PREVIEW.map((w, i) => (
+                <div key={w.week} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 18px', borderBottom: i < CURRICULUM_PREVIEW.length - 1 ? `1px solid ${C.elevated}` : 'none' }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 8, background: C.elevated, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <span style={{ fontFamily: FR, fontSize: 12, fontWeight: 800, color: C.accent }}>{String(w.week).padStart(2,'0')}</span>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontFamily: PJ, fontSize: 14, fontWeight: 600, color: C.text }}>{t(w.en, w.id)}</div>
+                    {lang === 'id' && <div style={{ fontFamily: PJ, fontSize: 11, color: C.textMuted, fontStyle: 'italic' }}>{w.en}</div>}
+                  </div>
+                </div>
+              ))}
+              <div style={{ padding: '12px 18px', background: C.elevated }}>
+                <span style={{ fontFamily: PJ, fontSize: 12, color: C.textMuted }}>
+                  {t('+ 19 more weeks of structured learning', '+ 19 minggu pembelajaran terstruktur lainnya')}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* ── TESTIMONIALS ─────────────────────────────────────────── */}
+          <div style={{ marginBottom: 40 }}>
+            <p style={{ fontFamily: PJ, fontSize: 10, fontWeight: 700, color: C.accent, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 8 }}>{t('LEARNER STORIES', 'KISAH PELAJAR')}</p>
+            <h2 style={{ fontFamily: FR, fontSize: 24, fontWeight: 800, color: C.text, marginBottom: 16, lineHeight: 1.2 }}>
+              {t('Real results from Batam.', 'Hasil nyata dari Batam.')}
+            </h2>
+            {TESTIMONIALS.map((tm, i) => (
+              <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: '18px 20px', marginBottom: 12 }}>
+                <div style={{ display: 'flex', gap: 2, marginBottom: 10 }}>
+                  {'★★★★★'.split('').map((s, j) => <span key={j} style={{ color: C.gold, fontSize: 14 }}>{s}</span>)}
+                </div>
+                <p style={{ fontFamily: PJ, fontSize: 14, color: C.text, lineHeight: 1.6, marginBottom: 14, fontStyle: 'italic' }}>{tm.quote}</p>
+                <div>
+                  <span style={{ fontFamily: PJ, fontSize: 13, fontWeight: 700, color: C.text }}>{tm.name}</span>
+                  <span style={{ fontFamily: PJ, fontSize: 12, color: C.textMuted, marginLeft: 8 }}>{tm.role}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* ── FAQ ──────────────────────────────────────────────────── */}
+          <div style={{ marginBottom: 40 }}>
+            <p style={{ fontFamily: PJ, fontSize: 10, fontWeight: 700, color: C.accent, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 8 }}>{t('FAQ', 'PERTANYAAN UMUM')}</p>
+            <h2 style={{ fontFamily: FR, fontSize: 24, fontWeight: 800, color: C.text, marginBottom: 16, lineHeight: 1.2 }}>
+              {t('Common questions.', 'Pertanyaan yang sering ditanya.')}
+            </h2>
+            {FAQS.map((faq, i) => (
+              <div key={i} style={{ background: C.card, border: `1px solid ${openFaq === i ? C.accentBorder : C.border}`, borderRadius: 14, marginBottom: 8, overflow: 'hidden', transition: 'border 0.2s' }}>
+                <button
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  style={{ width: '100%', background: 'none', border: 'none', padding: '16px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', gap: 12 }}>
+                  <span style={{ fontFamily: PJ, fontSize: 14, fontWeight: 600, color: C.text, textAlign: 'left' }}>{faq.q}</span>
+                  <Icon name={openFaq === i ? 'chevron-up' : 'chevron-down'} size={14} color={C.textMuted} />
+                </button>
+                {openFaq === i && (
+                  <div style={{ padding: '0 18px 16px' }}>
+                    <p style={{ fontFamily: PJ, fontSize: 14, color: C.textSec, lineHeight: 1.6, margin: 0 }}>{faq.a}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* ── FINAL CTA ────────────────────────────────────────────── */}
+          <div style={{ textAlign: 'center', background: `linear-gradient(135deg, rgba(45,80,22,0.06) 0%, rgba(45,80,22,0.02) 100%)`, border: `1px solid ${C.accentBorder}`, borderRadius: 20, padding: '32px 24px' }}>
+            <h2 style={{ fontFamily: FR, fontSize: 26, fontWeight: 900, color: C.text, marginBottom: 10, lineHeight: 1.2 }}>
+              {t('Your 6-month English transformation starts today.', 'Transformasi bahasa Inggris 6 bulanmu dimulai hari ini.')}
+            </h2>
+            <p style={{ fontFamily: PJ, fontSize: 14, color: C.textSec, marginBottom: 24, lineHeight: 1.6 }}>
+              {t('Free placement test · Personalised plan · 60 min/day', 'Tes placement gratis · Rencana personal · 60 menit/hari')}
+            </p>
+            <button
+              onClick={() => setScreen('survey-goal')}
+              style={{ background: C.accent, color: '#fff', border: 'none', borderRadius: 16, padding: '18px', fontSize: 17, fontWeight: 700, fontFamily: PJ, cursor: 'pointer', width: '100%', boxShadow: `0 0 40px ${C.accentGlow}`, marginBottom: 10 }}>
+              {t('Start My Free Assessment →', 'Mulai Asesmen Gratis →')}
+            </button>
+            <p style={{ fontFamily: PJ, fontSize: 12, color: C.textMuted }}>
+              {t('No payment · No credit card · 100% free', 'Tanpa bayaran · Tanpa kartu kredit · 100% gratis')}
+            </p>
+          </div>
+
         </div>
-
-        <button
-          onClick={() => setScreen('survey-goal')}
-          style={{ background: C.accent, color: '#fff', border: 'none', borderRadius: 16, padding: '18px 40px', fontSize: 17, fontWeight: 700, fontFamily: PJ, cursor: 'pointer', width: '100%', maxWidth: 360, boxShadow: `0 0 40px ${C.accentGlow}`, letterSpacing: '0.02em' }}>
-          {t('Start My Free Assessment →', 'Mulai Asesmen Gratis →')}
-        </button>
-
-        <p style={{ fontFamily: PJ, fontSize: 12, color: C.textMuted, marginTop: 14 }}>
-          {t('No payment · No credit card · 100% free', 'Tanpa bayaran · Tanpa kartu kredit · 100% gratis')}
-        </p>
-      </div>
-    </Shell>
-  )
+      </Shell>
+    )
+  }
 
   /* ═══════════════════════════════════════════════════════════════════════════
      SURVEY — GOAL
@@ -1305,7 +1449,9 @@ function Icon({ name, size = 18, color = 'currentColor', strokeWidth = 1.5 }) {
     'academic':    'M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5',
     'calendar':    'M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5',
     'chat':        'M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z',
-    'flag':        'M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5',
+    'flag':         'M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5',
+    'chevron-down': 'M19.5 8.25l-7.5 7.5-7.5-7.5',
+    'chevron-up':   'M4.5 15.75l7.5-7.5 7.5 7.5',
   }
   const d = paths[name]
   if (!d) return null
