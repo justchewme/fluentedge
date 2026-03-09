@@ -190,11 +190,13 @@ export default function FluentEdge() {
     }
   }
 
-  function finishLesson() {
-    const newXp       = xp + lessonXp
-    const newStreak   = streak + 1
-    const newCompleted = completedDays.includes(day) ? completedDays : [...completedDays, day]
-    const newDay      = completedDays.includes(day) ? day : day + 1
+  function finishLesson(extraXp = 0) {
+    const totalXp     = lessonXp + extraXp
+    const newXp       = xp + totalXp
+    const alreadyDone = completedDays.includes(day)
+    const newStreak   = alreadyDone ? streak : streak + 1
+    const newCompleted = alreadyDone ? completedDays : [...completedDays, day]
+    const newDay      = alreadyDone ? day : day + 1
     setXp(newXp); setStreak(newStreak); setCompletedDays(newCompleted); setDay(newDay)
     localStorage.setItem('fe_progress', JSON.stringify({
       xp: newXp, streak: newStreak, day: newDay, completedDays: newCompleted,
@@ -433,7 +435,7 @@ export default function FluentEdge() {
   ═══════════════════════════════════════════════════════════════════════════ */
   if (screen === 'survey-level') return (
     <Shell lang={lang} setLang={setLang}>
-      <SurveyLayout step={2} total={4}
+      <SurveyLayout step={2} total={4} onBack={() => setScreen('survey-goal')}
         headline={t('How is your English right now?', 'Seberapa bagus Bahasa Inggris kamu sekarang?')}
         sub={t("Be honest — we'll meet you exactly where you are.", 'Jawab jujur — kami mulai dari levelmu.')}>
         {[
@@ -454,7 +456,7 @@ export default function FluentEdge() {
   ═══════════════════════════════════════════════════════════════════════════ */
   if (screen === 'survey-industry') return (
     <Shell lang={lang} setLang={setLang}>
-      <SurveyLayout step={3} total={4}
+      <SurveyLayout step={3} total={4} onBack={() => setScreen('survey-level')}
         headline={t("What's your field?", 'Apa bidang pekerjaanmu?')}
         sub={t('Your lessons will use real scenarios from your industry.', 'Pelajaranmu disesuaikan dengan industri dan situasimu.')}>
         {[
@@ -478,7 +480,7 @@ export default function FluentEdge() {
   ═══════════════════════════════════════════════════════════════════════════ */
   if (screen === 'survey-faith') return (
     <Shell lang={lang} setLang={setLang}>
-      <SurveyLayout step={4} total={4}
+      <SurveyLayout step={4} total={4} onBack={() => setScreen('survey-industry')}
         headline={t('One last thing…', 'Satu hal lagi…')}
         sub={t('Are you part of a spiritual community? (Optional)', 'Apakah kamu bagian dari komunitas iman? (Opsional)')}>
         {[
@@ -539,9 +541,16 @@ export default function FluentEdge() {
 
     return (
       <Shell lang={lang} setLang={setLang}>
-        <div style={{ padding: '48px 24px 40px', maxWidth: 420, margin: '0 auto' }}>
+        <div style={{ padding: '28px 24px 40px', maxWidth: 420, margin: '0 auto' }}>
+          <button onClick={() => setScreen('survey-faith')}
+            style={{ background: 'none', border: 'none', fontFamily: PJ, fontSize: 14, color: C.textSec, cursor: 'pointer', padding: '0 0 20px', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Icon name="arrow-left" size={14} color={C.textSec} strokeWidth={2} />
+            {t('Back', 'Kembali')}
+          </button>
           <div style={{ textAlign: 'center', marginBottom: 36 }}>
-            <div style={{ fontSize: 52, marginBottom: 18 }}>🎯</div>
+            <div style={{ width: 64, height: 64, borderRadius: 16, background: C.elevated, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px' }}>
+              <Icon name="flag" size={26} color={C.accent} />
+            </div>
             <h1 style={{ fontFamily: FR, fontSize: 32, fontWeight: 900, color: C.text, marginBottom: 12 }}>
               {t('Your Plan is Ready', 'Rencanamu Sudah Siap')}
             </h1>
@@ -593,7 +602,12 @@ export default function FluentEdge() {
   ═══════════════════════════════════════════════════════════════════════════ */
   if (screen === 'register') return (
     <Shell lang={lang} setLang={setLang}>
-      <div style={{ padding: '60px 24px 40px', maxWidth: 420, margin: '0 auto' }}>
+      <div style={{ padding: '28px 24px 40px', maxWidth: 420, margin: '0 auto' }}>
+        <button onClick={() => setScreen('plan-reveal')}
+          style={{ background: 'none', border: 'none', fontFamily: PJ, fontSize: 14, color: C.textSec, cursor: 'pointer', padding: '0 0 24px', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Icon name="arrow-left" size={14} color={C.textSec} strokeWidth={2} />
+          {t('Back', 'Kembali')}
+        </button>
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
           <h1 style={{ fontFamily: FR, fontSize: 32, fontWeight: 900, color: C.text, marginBottom: 12 }}>
             {t('Lock In Your Spot', 'Simpan Posisimu')}
@@ -649,7 +663,7 @@ export default function FluentEdge() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
             <div>
               <p style={{ fontFamily: PJ, fontSize: 13, color: C.textMuted, marginBottom: 3 }}>{t('Good morning,', 'Selamat pagi,')}</p>
-              <h1 style={{ fontFamily: FR, fontSize: 30, fontWeight: 800, color: C.text }}>{firstName} 👋</h1>
+              <h1 style={{ fontFamily: FR, fontSize: 30, fontWeight: 800, color: C.text }}>{firstName}</h1>
             </div>
             <div style={{ background: C.elevated, border: `1px solid ${C.border}`, borderRadius: 12, padding: '12px 16px', textAlign: 'center', minWidth: 64 }}>
               <div style={{ fontFamily: FR, fontSize: 22, fontWeight: 800, color: C.accent, lineHeight: 1 }}>{streak}</div>
@@ -777,7 +791,7 @@ export default function FluentEdge() {
       <div style={{ padding: '28px 20px 80px', maxWidth: 420, margin: '0 auto' }}>
         <button onClick={() => setScreen('dashboard')}
           style={{ background: 'none', border: 'none', fontFamily: PJ, fontSize: 14, color: C.textSec, cursor: 'pointer', padding: '0 0 20px', display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Icon name="arrow-right" size={14} color={C.textSec} strokeWidth={2} style={{ transform: 'rotate(180deg)' }} />
+          <Icon name="arrow-left" size={14} color={C.textSec} strokeWidth={2} />
           {t('Back', 'Kembali')}
         </button>
         <p style={{ fontFamily: PJ, fontSize: 10, fontWeight: 700, color: C.gold, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 6 }}>{t('BONUS MODULE', 'MODUL BONUS')}</p>
@@ -821,8 +835,9 @@ export default function FluentEdge() {
       setBizProgress(newProgress)
       localStorage.setItem('fe_biz_progress', JSON.stringify(newProgress))
       const earned = bizXp
-      setXp(x => x + earned)
-      localStorage.setItem('fe_progress', JSON.stringify({ xp: xp + earned, streak, day, completedDays }))
+      const newXpVal = xp + earned
+      setXp(newXpVal)
+      localStorage.setItem('fe_progress', JSON.stringify({ xp: newXpVal, streak, day, completedDays }))
       setScreen('business-home')
     }
 
@@ -1085,7 +1100,7 @@ export default function FluentEdge() {
       }
 
       const q = questions[qNum]
-      const correctAnswer = q.options[q.ans] // ans is an index
+      const correctAnswer = q.options?.[q.ans] ?? q.options?.[0] // ans is an index
       return (
         <MCQQuestion
           progress={t(`Question ${qNum + 1}/${Math.min(questions.length, 3)}`, `Pertanyaan ${qNum + 1}/${Math.min(questions.length, 3)}`)}
@@ -1131,7 +1146,7 @@ export default function FluentEdge() {
             </div>
             <h3 style={{ fontFamily: FR, fontSize: 24, fontWeight: 800, color: C.text, marginBottom: 12 }}>{t("You're done!", 'Kamu selesai!')}</h3>
             <p style={{ fontFamily: PJ, fontSize: 14, color: C.textSec, marginBottom: 28, lineHeight: 1.6 }}>{t('Speaking practice complete. Amazing work today.', 'Latihan berbicara selesai. Kerja keras yang luar biasa!')}</p>
-            <button onClick={() => { awardXp(20); finishLesson() }}
+            <button onClick={() => finishLesson(20)}
               style={{ background: C.gold, color: '#1A1816', border: 'none', borderRadius: 14, padding: '16px 32px', fontSize: 16, fontWeight: 800, fontFamily: PJ, cursor: 'pointer', boxShadow: `0 2px 16px ${C.goldGlow}` }}>
               {t('Complete Lesson →', 'Selesaikan Pelajaran →')}
             </button>
@@ -1298,13 +1313,22 @@ function Shell({ children, lang, setLang, noLangToggle }) {
   )
 }
 
-function SurveyLayout({ step, total, headline, sub, children }) {
+function SurveyLayout({ step, total, headline, sub, children, onBack }) {
   return (
-    <div style={{ padding: '64px 24px 48px', maxWidth: 420, margin: '0 auto' }}>
-      <div style={{ display: 'flex', gap: 6, marginBottom: 36, justifyContent: 'center' }}>
-        {Array.from({ length: total }, (_, i) => (
-          <div key={i} style={{ width: i + 1 === step ? 28 : 8, height: 8, borderRadius: 4, background: i + 1 <= step ? '#2D5016' : '#D8D2C8', transition: 'all 0.35s ease' }} />
-        ))}
+    <div style={{ padding: '28px 24px 48px', maxWidth: 420, margin: '0 auto' }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 32, gap: 12 }}>
+        {onBack ? (
+          <button onClick={onBack}
+            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 13, color: '#9E9890', flexShrink: 0 }}>
+            <Icon name="arrow-left" size={13} color="#9E9890" strokeWidth={2} />
+          </button>
+        ) : <div style={{ width: 17 }} />}
+        <div style={{ display: 'flex', gap: 6, flex: 1, justifyContent: 'center' }}>
+          {Array.from({ length: total }, (_, i) => (
+            <div key={i} style={{ width: i + 1 === step ? 28 : 8, height: 8, borderRadius: 4, background: i + 1 <= step ? '#2D5016' : '#D8D2C8', transition: 'all 0.35s ease' }} />
+          ))}
+        </div>
+        <div style={{ width: 17 }} />
       </div>
       <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: 28, fontWeight: 900, color: '#1A1816', marginBottom: 10, textAlign: 'center', lineHeight: 1.25 }}>{headline}</h1>
       {sub && <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, color: '#6B6560', textAlign: 'center', marginBottom: 32, lineHeight: 1.6 }}>{sub}</p>}
@@ -1421,14 +1445,14 @@ function CenteredCompletion({ icon, msg, btnLabel, onNext }) {
 /* ═══════════════════════════════════════════════════════════════════════════════
    ICON COMPONENT — Heroicons 2.0 Outline
 ═══════════════════════════════════════════════════════════════════════════════ */
-function Icon({ name, size = 18, color = 'currentColor', strokeWidth = 1.5 }) {
+function Icon({ name, size = 18, color = 'currentColor', strokeWidth = 1.5, style: extraStyle }) {
   const paths = {
     'briefcase':   'M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 0 0 .75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 0 0-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0 1 12 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 0 1-.673-.38m0 0A2.18 2.18 0 0 1 3 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 0 1 3.413-.387m7.5 0V5.25A2.25 2.25 0 0 0 13.5 3h-3a2.25 2.25 0 0 0-2.25 2.25v.894m7.5 0a48.667 48.667 0 0 0-7.5 0M12 12.75h.008v.008H12v-.008Z',
     'exchange':    'M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5',
     'globe':       'M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0 1 21 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0 1 12 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 0 1 3 12c0-1.605.42-3.113 1.157-4.418',
     'book-open':   'M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25',
     'chart-start': 'M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941',
-    'chart-mid':   'M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z',
+    'chart-mid':   'M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625Z',
     'chart-top':   'M4.5 12.75l7.5-7.5 7.5 7.5m-15 6 7.5-7.5 7.5 7.5',
     'building':    'M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Z',
     'cube':        'M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9',
@@ -1452,13 +1476,14 @@ function Icon({ name, size = 18, color = 'currentColor', strokeWidth = 1.5 }) {
     'flag':         'M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5',
     'chevron-down': 'M19.5 8.25l-7.5 7.5-7.5-7.5',
     'chevron-up':   'M4.5 15.75l7.5-7.5 7.5 7.5',
+    'arrow-left':   'M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18',
   }
   const d = paths[name]
   if (!d) return null
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
       stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"
-      style={{ display: 'inline-block', flexShrink: 0 }}>
+      style={{ display: 'inline-block', flexShrink: 0, ...extraStyle }}>
       <path d={d} />
     </svg>
   )
