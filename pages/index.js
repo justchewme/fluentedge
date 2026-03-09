@@ -109,6 +109,11 @@ export default function FluentEdge() {
   // ── FAQ ───────────────────────────────────────────────────────────────────────
   const [openFaq, setOpenFaq] = useState(null)
 
+  // ── PWA install prompt ────────────────────────────────────────────────────────
+  const [installPrompt, setInstallPrompt] = useState(null)
+  const [showInstall,   setShowInstall]   = useState(false)
+  const [isOffline,     setIsOffline]     = useState(false)
+
   // ── Business Module ───────────────────────────────────────────────────────────
   const [bizUnit,     setBizUnit]     = useState(0)
   const [bizStep,     setBizStep]     = useState(0)   // 0=phrases, 1+=exercise index
@@ -148,6 +153,33 @@ export default function FluentEdge() {
   }, [])
 
   useEffect(() => { localStorage.setItem('fe_lang', lang) }, [lang])
+
+  // PWA install prompt capture
+  useEffect(() => {
+    const handler = e => { e.preventDefault(); setInstallPrompt(e) }
+    window.addEventListener('beforeinstallprompt', handler)
+    return () => window.removeEventListener('beforeinstallprompt', handler)
+  }, [])
+
+  // Show install banner after first lesson complete (only once, 7-day dismissal)
+  useEffect(() => {
+    if (completedDays.length === 1 && installPrompt) {
+      const dismissed = localStorage.getItem('fe_install_dismissed')
+      if (!dismissed || Date.now() - Number(dismissed) > 7 * 86400000) {
+        setShowInstall(true)
+      }
+    }
+  }, [completedDays.length, installPrompt])
+
+  // Offline detection
+  useEffect(() => {
+    setIsOffline(!navigator.onLine)
+    const on  = () => setIsOffline(false)
+    const off = () => setIsOffline(true)
+    window.addEventListener('online',  on)
+    window.addEventListener('offline', off)
+    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off) }
+  }, [])
 
   // Plan loading animation
   useEffect(() => {
@@ -204,6 +236,35 @@ export default function FluentEdge() {
     setScreen('lesson-done')
   }
 
+  function handleInstall() {
+    if (!installPrompt) return
+    installPrompt.prompt()
+    installPrompt.userChoice.then(() => { setShowInstall(false); setInstallPrompt(null) })
+  }
+
+  function dismissInstall() {
+    setShowInstall(false)
+    localStorage.setItem('fe_install_dismissed', String(Date.now()))
+  }
+
+  function shareLesson() {
+    const text = `🔥 Pelajaran selesai di FluentEdge!\n+${lessonXp} XP · ${streak} hari streak\n\nProgram English 6 bulan untuk profesional Batam.\nTes gratis: https://fluentedge-three.vercel.app`
+    if (navigator.share) {
+      navigator.share({ title: 'FluentEdge', text }).catch(() => {})
+    } else {
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
+    }
+  }
+
+  function shareBizUnit(unitTitle) {
+    const text = `📚 Selesai unit "${unitTitle}" di FluentEdge Business English!\n+${bizXp} XP earned\n\nBelajar Business English untuk profesional Batam.\nGratis: https://fluentedge-three.vercel.app`
+    if (navigator.share) {
+      navigator.share({ title: 'FluentEdge', text }).catch(() => {})
+    } else {
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
+    }
+  }
+
   async function submitReg(e) {
     e.preventDefault()
     const p = {
@@ -248,7 +309,7 @@ export default function FluentEdge() {
     ]
 
     return (
-      <Shell lang={lang} setLang={setLang}>
+      <Shell lang={lang} setLang={setLang} isOffline={isOffline} showInstall={showInstall} onInstall={handleInstall} onDismissInstall={dismissInstall}>
         <div style={{ maxWidth: 440, margin: '0 auto', padding: '0 20px 80px' }}>
 
           {/* ── HERO (above fold) ───────────────────────────────────── */}
@@ -412,7 +473,7 @@ export default function FluentEdge() {
      SURVEY — GOAL
   ═══════════════════════════════════════════════════════════════════════════ */
   if (screen === 'survey-goal') return (
-    <Shell lang={lang} setLang={setLang}>
+    <Shell lang={lang} setLang={setLang} isOffline={isOffline} showInstall={showInstall} onInstall={handleInstall} onDismissInstall={dismissInstall}>
       <SurveyLayout step={1} total={4}
         headline={t('Why do you want to master English?', 'Kenapa kamu ingin mahir bahasa Inggris?')}
         sub={t("We'll tailor your plan to your specific goal.", 'Kami sesuaikan programmu dengan tujuanmu.')}>
@@ -434,7 +495,7 @@ export default function FluentEdge() {
      SURVEY — LEVEL
   ═══════════════════════════════════════════════════════════════════════════ */
   if (screen === 'survey-level') return (
-    <Shell lang={lang} setLang={setLang}>
+    <Shell lang={lang} setLang={setLang} isOffline={isOffline} showInstall={showInstall} onInstall={handleInstall} onDismissInstall={dismissInstall}>
       <SurveyLayout step={2} total={4} onBack={() => setScreen('survey-goal')}
         headline={t('How is your English right now?', 'Seberapa bagus Bahasa Inggris kamu sekarang?')}
         sub={t("Be honest — we'll meet you exactly where you are.", 'Jawab jujur — kami mulai dari levelmu.')}>
@@ -455,7 +516,7 @@ export default function FluentEdge() {
      SURVEY — INDUSTRY
   ═══════════════════════════════════════════════════════════════════════════ */
   if (screen === 'survey-industry') return (
-    <Shell lang={lang} setLang={setLang}>
+    <Shell lang={lang} setLang={setLang} isOffline={isOffline} showInstall={showInstall} onInstall={handleInstall} onDismissInstall={dismissInstall}>
       <SurveyLayout step={3} total={4} onBack={() => setScreen('survey-level')}
         headline={t("What's your field?", 'Apa bidang pekerjaanmu?')}
         sub={t('Your lessons will use real scenarios from your industry.', 'Pelajaranmu disesuaikan dengan industri dan situasimu.')}>
@@ -479,7 +540,7 @@ export default function FluentEdge() {
      SURVEY — FAITH
   ═══════════════════════════════════════════════════════════════════════════ */
   if (screen === 'survey-faith') return (
-    <Shell lang={lang} setLang={setLang}>
+    <Shell lang={lang} setLang={setLang} isOffline={isOffline} showInstall={showInstall} onInstall={handleInstall} onDismissInstall={dismissInstall}>
       <SurveyLayout step={4} total={4} onBack={() => setScreen('survey-industry')}
         headline={t('One last thing…', 'Satu hal lagi…')}
         sub={t('Are you part of a spiritual community? (Optional)', 'Apakah kamu bagian dari komunitas iman? (Opsional)')}>
@@ -507,7 +568,7 @@ export default function FluentEdge() {
       t('Building your daily schedule…', 'Membangun jadwal harianmu…'),
     ]
     return (
-      <Shell lang={lang} setLang={setLang}>
+      <Shell lang={lang} setLang={setLang} isOffline={isOffline} showInstall={showInstall} onInstall={handleInstall} onDismissInstall={dismissInstall}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '40px 24px', textAlign: 'center' }}>
           <div style={{ width: 72, height: 72, borderRadius: '50%', border: `3px solid ${C.border}`, borderTop: `3px solid ${C.accent}`, animation: 'spin 1s linear infinite', marginBottom: 36 }} />
           <h2 style={{ fontFamily: FR, fontSize: 28, fontWeight: 800, color: C.text, marginBottom: 8 }}>
@@ -540,7 +601,7 @@ export default function FluentEdge() {
     const targetLevel = level === 'beginner' ? 'B2' : level === 'intermediate' ? 'C1' : 'C2'
 
     return (
-      <Shell lang={lang} setLang={setLang}>
+      <Shell lang={lang} setLang={setLang} isOffline={isOffline} showInstall={showInstall} onInstall={handleInstall} onDismissInstall={dismissInstall}>
         <div style={{ padding: '28px 24px 40px', maxWidth: 420, margin: '0 auto' }}>
           <button onClick={() => setScreen('survey-faith')}
             style={{ background: 'none', border: 'none', fontFamily: PJ, fontSize: 14, color: C.textSec, cursor: 'pointer', padding: '0 0 20px', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -601,7 +662,7 @@ export default function FluentEdge() {
      REGISTER
   ═══════════════════════════════════════════════════════════════════════════ */
   if (screen === 'register') return (
-    <Shell lang={lang} setLang={setLang}>
+    <Shell lang={lang} setLang={setLang} isOffline={isOffline} showInstall={showInstall} onInstall={handleInstall} onDismissInstall={dismissInstall}>
       <div style={{ padding: '28px 24px 40px', maxWidth: 420, margin: '0 auto' }}>
         <button onClick={() => setScreen('plan-reveal')}
           style={{ background: 'none', border: 'none', fontFamily: PJ, fontSize: 14, color: C.textSec, cursor: 'pointer', padding: '0 0 24px', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -657,7 +718,7 @@ export default function FluentEdge() {
     const firstName  = profile?.name?.split(' ')[0] || t('Learner', 'Pelajar')
 
     return (
-      <Shell lang={lang} setLang={setLang}>
+      <Shell lang={lang} setLang={setLang} isOffline={isOffline} showInstall={showInstall} onInstall={handleInstall} onDismissInstall={dismissInstall}>
         <div style={{ padding: '28px 20px 80px', maxWidth: 420, margin: '0 auto' }}>
           {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
@@ -787,7 +848,7 @@ export default function FluentEdge() {
      BUSINESS HOME
   ═══════════════════════════════════════════════════════════════════════════ */
   if (screen === 'business-home') return (
-    <Shell lang={lang} setLang={setLang}>
+    <Shell lang={lang} setLang={setLang} isOffline={isOffline} showInstall={showInstall} onInstall={handleInstall} onDismissInstall={dismissInstall}>
       <div style={{ padding: '28px 20px 80px', maxWidth: 420, margin: '0 auto' }}>
         <button onClick={() => setScreen('dashboard')}
           style={{ background: 'none', border: 'none', fontFamily: PJ, fontSize: 14, color: C.textSec, cursor: 'pointer', padding: '0 0 20px', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -843,7 +904,7 @@ export default function FluentEdge() {
 
     // ── Completion screen ──────────────────────────────────────────────────
     if (isDone) return (
-      <Shell lang={lang} setLang={setLang}>
+      <Shell lang={lang} setLang={setLang} isOffline={isOffline} showInstall={showInstall} onInstall={handleInstall} onDismissInstall={dismissInstall}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '48px 24px', textAlign: 'center' }}>
           <div style={{ width: 72, height: 72, borderRadius: '50%', background: C.goldGlow, border: `2px solid rgba(196,151,58,0.4)`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
             <Icon name="star" size={32} color={C.gold} strokeWidth={1.5} />
@@ -859,17 +920,24 @@ export default function FluentEdge() {
               <span style={{ fontFamily: FR, fontSize: 16, fontWeight: 800, color: C.accent }}>{(bizProgress.includes(unit.id) ? bizProgress.length : bizProgress.length + 1)} / 10</span>
             </div>
           </div>
-          <button onClick={finishBizUnit}
-            style={{ background: C.gold, color: '#1A1816', border: 'none', borderRadius: 14, padding: '16px 36px', fontSize: 16, fontWeight: 800, fontFamily: PJ, cursor: 'pointer', boxShadow: `0 2px 24px ${C.goldGlow}`, width: '100%', maxWidth: 320 }}>
-            {t('Back to Business Pack →', 'Kembali ke Business Pack →')}
-          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: 320 }}>
+            <button onClick={finishBizUnit}
+              style={{ background: C.gold, color: '#1A1816', border: 'none', borderRadius: 14, padding: '16px 36px', fontSize: 16, fontWeight: 800, fontFamily: PJ, cursor: 'pointer', boxShadow: `0 2px 24px ${C.goldGlow}` }}>
+              {t('Back to Business Pack →', 'Kembali ke Business Pack →')}
+            </button>
+            <button onClick={() => shareBizUnit(lang === 'en' ? unit.titleEN : unit.titleID)}
+              style={{ background: '#25D366', color: '#fff', border: 'none', borderRadius: 14, padding: '14px', fontSize: 14, fontWeight: 700, fontFamily: PJ, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              {t('Share to WhatsApp', 'Bagikan ke WhatsApp')}
+            </button>
+          </div>
         </div>
       </Shell>
     )
 
     // ── Phrase reference card ──────────────────────────────────────────────
     if (bizStep === 0) return (
-      <Shell lang={lang} setLang={setLang}>
+      <Shell lang={lang} setLang={setLang} isOffline={isOffline} showInstall={showInstall} onInstall={handleInstall} onDismissInstall={dismissInstall}>
         <div style={{ padding: '28px 20px 80px', maxWidth: 420, margin: '0 auto' }}>
           <button onClick={() => setScreen('business-home')}
             style={{ background: 'none', border: 'none', fontFamily: PJ, fontSize: 14, color: C.textSec, cursor: 'pointer', padding: '0 0 20px', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -905,7 +973,7 @@ export default function FluentEdge() {
     // ── Exercise MCQ ───────────────────────────────────────────────────────
     const ex = unit.exercises[exIdx]
     return (
-      <Shell lang={lang} setLang={setLang}>
+      <Shell lang={lang} setLang={setLang} isOffline={isOffline} showInstall={showInstall} onInstall={handleInstall} onDismissInstall={dismissInstall}>
         <div style={{ padding: '28px 20px 80px', maxWidth: 420, margin: '0 auto' }}>
           {/* Progress bar */}
           <div style={{ display: 'flex', gap: 4, marginBottom: 20 }}>
@@ -1200,7 +1268,7 @@ export default function FluentEdge() {
     }
 
     return (
-      <Shell lang={lang} setLang={setLang} noLangToggle>
+      <Shell lang={lang} setLang={setLang} noLangToggle isOffline={isOffline} showInstall={showInstall} onInstall={handleInstall} onDismissInstall={dismissInstall}>
         <div style={{ maxWidth: 420, margin: '0 auto', padding: '0 20px 60px' }}>
           {/* Lesson header */}
           <div style={{ padding: '18px 0 24px', display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -1234,7 +1302,7 @@ export default function FluentEdge() {
      LESSON DONE
   ═══════════════════════════════════════════════════════════════════════════ */
   if (screen === 'lesson-done') return (
-    <Shell lang={lang} setLang={setLang}>
+    <Shell lang={lang} setLang={setLang} isOffline={isOffline} showInstall={showInstall} onInstall={handleInstall} onDismissInstall={dismissInstall}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '48px 24px', textAlign: 'center' }}>
         <div style={{ width: 64, height: 64, borderRadius: 16, background: C.elevated, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}>
           <Icon name="check" size={28} color={C.accent} strokeWidth={2} />
@@ -1259,11 +1327,19 @@ export default function FluentEdge() {
           ))}
         </div>
 
-        <button
-          onClick={() => setScreen('dashboard')}
-          style={{ width: '100%', maxWidth: 360, background: C.accent, color: '#fff', border: 'none', borderRadius: 16, padding: '18px', fontSize: 17, fontWeight: 700, fontFamily: PJ, cursor: 'pointer', boxShadow: `0 0 40px ${C.accentGlow}` }}>
-          {t('Back to Dashboard →', 'Kembali ke Dashboard →')}
-        </button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%', maxWidth: 360 }}>
+          <button
+            onClick={() => setScreen('dashboard')}
+            style={{ width: '100%', background: C.accent, color: '#fff', border: 'none', borderRadius: 16, padding: '18px', fontSize: 17, fontWeight: 700, fontFamily: PJ, cursor: 'pointer', boxShadow: `0 0 40px ${C.accentGlow}` }}>
+            {t('Back to Dashboard →', 'Kembali ke Dashboard →')}
+          </button>
+          <button
+            onClick={shareLesson}
+            style={{ width: '100%', background: '#25D366', color: '#fff', border: 'none', borderRadius: 16, padding: '15px', fontSize: 15, fontWeight: 700, fontFamily: PJ, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            {t('Share to WhatsApp', 'Bagikan ke WhatsApp')}
+          </button>
+        </div>
       </div>
     </Shell>
   )
@@ -1275,7 +1351,7 @@ export default function FluentEdge() {
    SHARED SUB-COMPONENTS
 ═══════════════════════════════════════════════════════════════════════════════ */
 
-function Shell({ children, lang, setLang, noLangToggle }) {
+function Shell({ children, lang, setLang, noLangToggle, isOffline, showInstall, onInstall, onDismissInstall }) {
   return (
     <>
       <Head>
@@ -1298,8 +1374,31 @@ function Shell({ children, lang, setLang, noLangToggle }) {
         `}</style>
       </Head>
       <div style={{ background: '#F7F4EF', minHeight: '100vh' }}>
+        {/* Offline banner */}
+        {isOffline && (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 300, background: '#6B6560', color: '#fff', textAlign: 'center', padding: '10px 16px', fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 13, fontWeight: 600 }}>
+            Mode Offline — Pelajaran tersimpan tetap bisa diakses
+          </div>
+        )}
+        {/* PWA install banner */}
+        {showInstall && onInstall && (
+          <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 300, background: '#FFFFFF', borderTop: '1px solid #D8D2C8', padding: '16px 20px', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+            <p style={{ fontSize: 14, fontWeight: 600, color: '#1A1816', marginBottom: 4 }}>Pasang FluentEdge di HP kamu</p>
+            <p style={{ fontSize: 12, color: '#6B6560', marginBottom: 12 }}>Akses cepat & belajar offline kapan saja</p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={onInstall}
+                style={{ flex: 1, background: '#2D5016', color: '#fff', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+                Pasang Sekarang
+              </button>
+              <button onClick={onDismissInstall}
+                style={{ flex: 1, background: '#EDE9E3', color: '#6B6560', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+                Nanti Saja
+              </button>
+            </div>
+          </div>
+        )}
         {!noLangToggle && (
-          <div style={{ position: 'fixed', top: 16, right: 16, zIndex: 200 }}>
+          <div style={{ position: 'fixed', top: isOffline ? 44 : 16, right: 16, zIndex: 200, transition: 'top 0.3s' }}>
             <button
               onClick={() => setLang(l => l === 'en' ? 'id' : 'en')}
               style={{ background: '#EDE9E3', border: '1px solid #D8D2C8', borderRadius: 20, padding: '6px 14px', fontSize: 12, fontWeight: 700, color: '#6B6560', cursor: 'pointer', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
